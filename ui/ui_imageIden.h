@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'imageIden.ui'
 **
-** Created: Wed Apr 22 00:33:44 2015
+** Created: Fri Apr 24 23:48:39 2015
 **      by: Qt User Interface Compiler version 4.5.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -14,15 +14,19 @@
 #include <QtGui/QAction>
 #include <QtGui/QApplication>
 #include <QtGui/QButtonGroup>
+#include <QtGui/QCheckBox>
 #include <QtGui/QGroupBox>
+#include <QtGui/QHBoxLayout>
 #include <QtGui/QHeaderView>
 #include <QtGui/QLabel>
 #include <QtGui/QLineEdit>
 #include <QtGui/QMainWindow>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
+#include <QtGui/QProgressBar>
 #include <QtGui/QPushButton>
 #include <QtGui/QRadioButton>
+#include <QtGui/QSpinBox>
 #include <QtGui/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -54,14 +58,19 @@ public:
     QLabel *label_6;
     QGroupBox *groupBox_2;
     QLineEdit *leName;
-    QLineEdit *leNumber;
     QLabel *label;
     QLabel *label_3;
     QLabel *label_4;
-    QLineEdit *leTime;
     QLabel *label_5;
     QPushButton *btSave;
+    QPushButton *btPhoto;
+    QSpinBox *numberSBox;
+    QSpinBox *delaySBox;
+    QWidget *layoutWidget;
+    QHBoxLayout *horizontalLayout;
+    QCheckBox *grayBox;
     QRadioButton *rbRefrashImg;
+    QProgressBar *saveProgressBar;
     QMenuBar *menubar;
     QMenu *menuFile;
 
@@ -115,7 +124,7 @@ public:
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         buttonQuit = new QPushButton(centralwidget);
         buttonQuit->setObjectName(QString::fromUtf8("buttonQuit"));
-        buttonQuit->setGeometry(QRect(660, 360, 81, 32));
+        buttonQuit->setGeometry(QRect(640, 360, 81, 32));
         QFont font2;
         font2.setFamily(QString::fromUtf8("WenQuanYi Micro Hei"));
         font2.setBold(false);
@@ -163,36 +172,58 @@ public:
         groupBox_2->setFont(font2);
         leName = new QLineEdit(groupBox_2);
         leName->setObjectName(QString::fromUtf8("leName"));
-        leName->setGeometry(QRect(120, 30, 91, 27));
-        leNumber = new QLineEdit(groupBox_2);
-        leNumber->setObjectName(QString::fromUtf8("leNumber"));
-        leNumber->setGeometry(QRect(350, 30, 91, 27));
+        leName->setGeometry(QRect(130, 30, 91, 27));
         label = new QLabel(groupBox_2);
         label->setObjectName(QString::fromUtf8("label"));
-        label->setGeometry(QRect(60, 30, 61, 31));
+        label->setGeometry(QRect(80, 30, 41, 31));
         label_3 = new QLabel(groupBox_2);
         label_3->setObjectName(QString::fromUtf8("label_3"));
         label_3->setGeometry(QRect(290, 30, 61, 31));
         label_4 = new QLabel(groupBox_2);
         label_4->setObjectName(QString::fromUtf8("label_4"));
         label_4->setGeometry(QRect(290, 70, 61, 31));
-        leTime = new QLineEdit(groupBox_2);
-        leTime->setObjectName(QString::fromUtf8("leTime"));
-        leTime->setGeometry(QRect(350, 70, 91, 27));
         label_5 = new QLabel(groupBox_2);
         label_5->setObjectName(QString::fromUtf8("label_5"));
-        label_5->setGeometry(QRect(450, 70, 61, 31));
+        label_5->setGeometry(QRect(430, 70, 21, 31));
         btSave = new QPushButton(groupBox_2);
         btSave->setObjectName(QString::fromUtf8("btSave"));
-        btSave->setGeometry(QRect(20, 90, 100, 29));
+        btSave->setGeometry(QRect(170, 90, 100, 29));
         btSave->setFont(font2);
-        rbRefrashImg = new QRadioButton(centralwidget);
+        btPhoto = new QPushButton(groupBox_2);
+        btPhoto->setObjectName(QString::fromUtf8("btPhoto"));
+        btPhoto->setGeometry(QRect(50, 90, 98, 27));
+        numberSBox = new QSpinBox(groupBox_2);
+        numberSBox->setObjectName(QString::fromUtf8("numberSBox"));
+        numberSBox->setGeometry(QRect(350, 30, 71, 27));
+        delaySBox = new QSpinBox(groupBox_2);
+        delaySBox->setObjectName(QString::fromUtf8("delaySBox"));
+        delaySBox->setGeometry(QRect(350, 70, 71, 27));
+        layoutWidget = new QWidget(centralwidget);
+        layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
+        layoutWidget->setGeometry(QRect(30, 350, 263, 29));
+        horizontalLayout = new QHBoxLayout(layoutWidget);
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        horizontalLayout->setContentsMargins(0, 0, 0, 0);
+        grayBox = new QCheckBox(layoutWidget);
+        grayBox->setObjectName(QString::fromUtf8("grayBox"));
+
+        horizontalLayout->addWidget(grayBox);
+
+        rbRefrashImg = new QRadioButton(layoutWidget);
         rbRefrashImg->setObjectName(QString::fromUtf8("rbRefrashImg"));
-        rbRefrashImg->setGeometry(QRect(90, 350, 201, 22));
+        rbRefrashImg->setCheckable(true);
+
+        horizontalLayout->addWidget(rbRefrashImg);
+
+        saveProgressBar = new QProgressBar(centralwidget);
+        saveProgressBar->setObjectName(QString::fromUtf8("saveProgressBar"));
+        saveProgressBar->setGeometry(QRect(340, 350, 221, 23));
+        saveProgressBar->setValue(24);
+        saveProgressBar->setTextVisible(true);
         ImageIden->setCentralWidget(centralwidget);
         menubar = new QMenuBar(ImageIden);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 788, 26));
+        menubar->setGeometry(QRect(0, 0, 788, 30));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
         ImageIden->setMenuBar(menubar);
@@ -235,7 +266,9 @@ public:
         label_3->setText(QApplication::translate("ImageIden", "\346\225\260\351\207\217", 0, QApplication::UnicodeUTF8));
         label_4->setText(QApplication::translate("ImageIden", "\345\273\266\346\227\266", 0, QApplication::UnicodeUTF8));
         label_5->setText(QApplication::translate("ImageIden", "(s)", 0, QApplication::UnicodeUTF8));
-        btSave->setText(QApplication::translate("ImageIden", "\344\277\235\345\255\230", 0, QApplication::UnicodeUTF8));
+        btSave->setText(QApplication::translate("ImageIden", "\350\277\236\346\213\215", 0, QApplication::UnicodeUTF8));
+        btPhoto->setText(QApplication::translate("ImageIden", "\346\212\223\346\213\215", 0, QApplication::UnicodeUTF8));
+        grayBox->setText(QApplication::translate("ImageIden", "\347\201\260\345\272\246\345\233\276\346\230\276\347\244\272", 0, QApplication::UnicodeUTF8));
         rbRefrashImg->setText(QApplication::translate("ImageIden", "\345\256\232\346\227\266\345\210\267\346\226\260\345\233\276\345\203\217", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("ImageIden", "\346\226\207\344\273\266", 0, QApplication::UnicodeUTF8));
     } // retranslateUi

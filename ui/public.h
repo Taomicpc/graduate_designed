@@ -53,7 +53,9 @@ typedef struct
 {
     char name[48];//要写入的文件名,为了字节对齐取48
     int count;//要写入多少张
-    
+    int haveSave;//记录已经写入多少张，可在别的程序读取作为进度条
+    int delay;//每隔多少秒拍一张
+
     //此用法是posix的无名信号量头文件是：<semaphore.h>
     sem_t sem_wtofile_wakeup;//本地jpg读写的信号量
     sem_t sem_wtofile_standby;//本地jpg读写的信号量

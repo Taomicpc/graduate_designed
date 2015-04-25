@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
         return;
     }
 
+    printf("Wtofile process standy!\n");
      
     count = 0;
     while(1)
@@ -44,7 +45,9 @@ int main(int argc, char* argv[])
         
         if(shmPtr->wtofile.b_wtofile_running == false)
         {
+            printf("Wtofile process Sleep!\n");
             sem_wait(&shmPtr->wtofile.sem_wtofile_wakeup);//睡眠等待控制台允许
+            printf("Wtofile process Wakeup!\n");
         }
 
         jpgnum = shmPtr->wtofile.count;
@@ -58,10 +61,10 @@ int main(int argc, char* argv[])
                 break;
             }
             
-            sprintf(filename, "%s%d.jpg", shmPtr->wtofile.name, count);
+            sprintf(filename, "%s%d_%d_%d.jpg", shmPtr->wtofile.name, count, shmPtr->tower.hori_angle, shmPtr->tower.veri_angle);
             //printf("writing %s from 0x%x,jpg size:%d\n", filename, shmPtr->videoBuf[0].picStart,shmPtr->videoBuf[0].imageSize);
-            char command[50];
-            sprintf(command, "cp -f ./image/image.jpg ./image/%s", filename);
+            char command[100];
+            sprintf(command, "cp -f ./image/src_image.jpg ./image/%s", filename);
             printf("prepera to save %s\n",filename);
     
             if(fork() == 0)
@@ -76,9 +79,10 @@ int main(int argc, char* argv[])
                 sem_wait(&shmPtr->shmSem);//获得共享内存的使用权利
                 shmPtr->wtofile.b_finish_wtofile= true;
                 shmPtr->wtofile.b_wtofile_running = false;
+                shmPtr->wtofile.haveSave++;
                 sem_post(&shmPtr->shmSem);//释放共享内存区信号量
                 //pthread_rwlock_rdlock(&dataPtr->rwlock);//上读锁
-                sleep(1);//延时１s           
+                sleep(shmPtr->wtofile.delay);//延时１s           
             
                 sem_wait(&shmPtr->shmSem);//获得共享内存的使用权利
                 shmPtr->wtofile.b_wtofile_running = true;

@@ -32,11 +32,16 @@ public slots :
 	void btLeftPushed();
 	void btRightPushed();
 	void btSavePushed();
-	
+	void btPhotoPushed();
+	void btPrePicPushed();
+	void btNextPicPushed();
+    void enableSaveButton(int value);
+
 	void horizontalAngleSet(); //写入角度
 	void verticalAngleSet();	
 	
 	void setRefrashImage(bool checked);  
+	void setGrayImage(bool checked);  
 
 	void doWhenTimeout1(); //定时刷新图片
 	void doWhenTimeout2(); //图片保存延时

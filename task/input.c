@@ -115,6 +115,8 @@ int main(int argc, char* argv[])
 		printf("Picture:Width = %d   Height = %d\n", v4l2Fmt.fmt.pix.width, v4l2Fmt.fmt.pix.height);
 	}
 
+    printf("Input process standy!\n");
+
     numBufs = 0;
     while(1)
     {
@@ -127,7 +129,9 @@ int main(int argc, char* argv[])
         
         if(shmPtr->input.b_input_running == false)
         {
+            printf("Input process Sleep!\n");
             sem_wait(&shmPtr->input.sem_input_wakeup);//睡眠等待控制台允许
+            printf("Input process Wakeup!\n");
         }
 
         if(shmPtr->wtofile.b_finish_wtofile == true 

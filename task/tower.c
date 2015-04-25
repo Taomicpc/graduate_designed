@@ -98,8 +98,7 @@ int main(int argc, char** argv)
     ioctl(fd, HORIZON_SET, shmPtr->tower.hori_angle);     
     ioctl(fd, VERTIAL_SET, shmPtr->tower.veri_angle);     
 
-    printf("\nHello!Welcome to tao's tower control!\n");
-    printf("you could input how you want to control\n");
+    printf("Tower process standy!\n");
 
     while(1)
     {
@@ -112,7 +111,9 @@ int main(int argc, char** argv)
         
         if(shmPtr->tower.b_tower_running == false)
         {
+            printf("Tower process Sleep!\n");
             sem_wait(&shmPtr->tower.sem_tower_wakeup);//睡眠等待控制台允许
+            printf("Tower process Wakeup!\n");
         }
         
         ioctl(fd, HORIZON_SET, shmPtr->tower.hori_angle);     

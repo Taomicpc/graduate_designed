@@ -54,6 +54,7 @@ int shm_init(void)
     memset(shmPtr, 0, sizeof(shmType));
     shmPtr->tower.hori_angle = 1000;
     shmPtr->tower.veri_angle = 1000;//角度信号初始化
+    shmPtr->wtofile.delay = 1;//默认初始化为1s
     //前一个1表明在进程间使用，后一个1设置一个信号量初始值，1是信号空闲，０是信号忙碌
     sem_init(&shmPtr->shmSem, 1, 1);
 
@@ -106,7 +107,6 @@ int process_create(void)
 
     char* execvInput[] = {"./input", NULL};
     char* execvWtoFile[] = {"./wtofile",NULL};
-    char* execvWtoLCD[] = {"./wtolcd",NULL};
     char* execvDeal[] = {"./deal", SshmId, NULL};
     char* execvTower[] = {"./tower", SshmId, NULL};
 
@@ -126,12 +126,6 @@ int process_create(void)
     {
         execv("./wtofile", execvWtoFile);//启动共享资源写入进程
         perror("execv wtofile error");
-    }
-
-    if(fork()==0)//缓冲区数据显示到lcd
-    {
-        execv("./wtolcd", execvWtoLCD);//启动共享资源写入进程
-        perror("execv wtolcd error");
     }
 
     if(fork()==0)//图像处理进程
@@ -186,7 +180,6 @@ ImageIden::ImageIden(QWidget *parent):
 	QWSServer::setCurrentInputMethod(im);
 	((TQInputMethod*)im)->setVisible(false);
 	
-
 	//设置背景图
 	QRect screen_size = QApplication::desktop()->screenGeometry(); //get window size
 	QPixmap pix("/opt/gb_ms/picture/background_1.jpg", 0, Qt::AutoColor);
@@ -196,14 +189,21 @@ ImageIden::ImageIden(QWidget *parent):
 	setPalette(palette);
 
 //按钮背景
-	ui->buttonQuit->setText("");
-	ui->buttonQuit->setFixedSize(81,32);
-	ui->buttonQuit->setIconSize(QSize(81,32));
-	pix.load("/opt/gb_ms/picture/return.png", 0, Qt::AutoColor);
-	pix = pix.scaled(81, 32, Qt::IgnoreAspectRatio);
-	ui->buttonQuit->setIcon(QIcon(pix));
+	ui->buttonQuit->setText("Exit");
+//	ui->buttonQuit->setFixedSize(81,32);
+//	ui->buttonQuit->setIconSize(QSize(81,32));
+//	pix.load("./image/image.jpg", 0, Qt::AutoColor);
+//	pix = pix.scaled(81, 32, Qt::IgnoreAspectRatio);
+//	ui->buttonQuit->setIcon(QIcon(pix));
+    ui->btNextPic->setFlat(true);//设置按键透明
+    ui->btPrePic->setFlat(true);
 
-
+//设置保存图片的默认参数
+    ui->leName->setText("hello");
+    ui->delaySBox->setValue(1);//默认间隔1s
+    ui->numberSBox->setValue(1);//默认采集个数
+    ui->btSave->setEnabled(false);//默认不启动
+    ui->saveProgressBar->setVisible(false);//默认进度不可见
 
 //signal and slots
 	connect(ui->actionFromFile, SIGNAL(triggered()), this, SLOT(loadPicture()));
@@ -215,23 +215,26 @@ ImageIden::ImageIden(QWidget *parent):
 	connect(ui->btLeft, SIGNAL(clicked()), this, SLOT(btLeftPushed()));	
 	connect(ui->btRight, SIGNAL(clicked()), this, SLOT(btRightPushed()));	
 	connect(ui->btSave, SIGNAL(clicked()), this, SLOT(btSavePushed()));	
+	connect(ui->btPhoto, SIGNAL(clicked()), this, SLOT(btPhotoPushed()));	
+	connect(ui->btNextPic, SIGNAL(clicked()), this, SLOT(btNextPicPushed()));	
+	connect(ui->btPrePic, SIGNAL(clicked()), this, SLOT(btPrePicPushed()));	
+	connect(ui->numberSBox, SIGNAL(valueChanged(int)), this, SLOT(enableSaveButton(int)));	
 		
 	connect(ui->leHorizontal, SIGNAL(editingFinished()), this, SLOT(horizontalAngleSet()));	
 	connect(ui->leVertical, SIGNAL(editingFinished()), this, SLOT(verticalAngleSet()));	
 		
 	connect(ui->rbRefrashImg, SIGNAL(toggled(bool)), this, SLOT(setRefrashImage(bool)));	
+	connect(ui->grayBox, SIGNAL(toggled(bool)), this, SLOT(setGrayImage(bool)));	
 
-	
 	connect(timer1, SIGNAL(timeout()), this, SLOT(doWhenTimeout1()));
 	timer1->setSingleShot(false); //多次触发
 	
 	connect(timer2, SIGNAL(timeout()), this, SLOT(doWhenTimeout2()));
 	timer2->setSingleShot(false); //多次触发
 	
-	m_getImg->load("/opt/gb_ms/picture/background.jpg");
+	m_getImg->load("./image/src_image.jpg");
 	*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-
 	
     shm_init();//初始化全局共享内存指针。
     process_create();//创建各需要的进程，必须在上一个共享内存初始化后进行！
@@ -266,7 +269,12 @@ void ImageIden::loadPicture()
 					tr("Open img error!"));
 			return;
 		}
-		*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+		
+        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+        if (timer1->isActive())
+			timer1->stop();
+
+        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
 }
@@ -364,19 +372,72 @@ void ImageIden::btSavePushed()
 {
 	cout << "save" << endl;
 
-    if (ui->leNumber->text().toInt() > 0)
-	{	
-        sem_wait(&shmPtr->shmSem);
+    sem_wait(&shmPtr->shmSem);
+    if(ui->leName->text().isEmpty())
         strcpy(shmPtr->wtofile.name, "hello");
-        shmPtr->wtofile.count = ui->leNumber->text().toInt();
-        shmPtr->wtofile.b_wtofile_running = true;
-        sem_post(&shmPtr->wtofile.sem_wtofile_wakeup);//开始video更新
-        sem_post(&shmPtr->shmSem);
-	}	
-	else
-	{
-		cout << "parameter error " << endl;
-	}
+    else
+        strcpy(shmPtr->wtofile.name, qPrintable( ui->leName->text() ) );
+    
+    shmPtr->wtofile.count = ui->numberSBox->value();
+    shmPtr->wtofile.haveSave = 0;
+    shmPtr->wtofile.delay = ui->delaySBox->value();
+    shmPtr->wtofile.b_wtofile_running = true;
+    sem_post(&shmPtr->wtofile.sem_wtofile_wakeup);//开始video更新
+    sem_post(&shmPtr->shmSem);
+	
+    //刷新期间禁止修改，直到完成后，由定时器激活
+    ui->leName->setEnabled(false);//
+    ui->numberSBox->setEnabled(false);//
+    ui->delaySBox->setEnabled(false);
+    ui->btSave->setEnabled(false);//
+
+    timer2->start(500);//启动定时器进行刷新，更新进度条	
+    ui->saveProgressBar->setRange(0, ui->numberSBox->value());
+    ui->saveProgressBar->setVisible(true);//设置进度条可见
+}
+
+void ImageIden::enableSaveButton(int value)
+{
+    ui->btSave->setEnabled(value>1);//只有数量大于1才激活保存按钮
+}
+
+void ImageIden::btPhotoPushed()
+{
+	cout << "Photo" << endl;
+
+    ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+
+    if (timer1->isActive())
+			timer1->stop();
+
+    if(ui->grayBox->isChecked())
+        system("cp -f ./image/deal_image.jpg ./image/photo.jpg");
+    else
+        system("cp -f ./image/src_image.jpg ./image/photo.jpg");
+
+	m_getImg->load("./image/photo.jpg");
+    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+}
+
+void ImageIden::btPrePicPushed()
+{
+	cout << "Pre Photo" << endl;
+
+    ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+
+    if (timer1->isActive())
+			timer1->stop();
+/*
+	m_getImg->load("./image/photo.jpg");
+    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+*/
+}
+
+void ImageIden::btNextPicPushed()
+{
+	cout << "Photo" << endl;
 }
 
 void ImageIden::horizontalAngleSet()
@@ -416,7 +477,6 @@ void ImageIden::verticalAngleSet()
         return;//直接返回不作角度修改
 }
 
-
 void ImageIden::setRefrashImage(bool checked)
 {
 	if (checked)
@@ -432,28 +492,54 @@ void ImageIden::setRefrashImage(bool checked)
 			timer1->stop();
 }
 
+void ImageIden::setGrayImage(bool checked)
+{
+	if (checked)
+	{
+		cout << "Gray deal" << endl;
+        sem_wait(&shmPtr->shmSem);
+        shmPtr->deal.b_deal_running = true;//允许图像处理进程运行
+        sem_post(&shmPtr->deal.sem_deal_wakeup);
+        sem_post(&shmPtr->shmSem);
+    }
+	else
+    {
+        cout << "No gray deal" << endl;
+        sem_wait(&shmPtr->shmSem);
+        shmPtr->deal.b_deal_running = false;//允许图像处理进程运行
+        //sem_post(&shmPtr->deal.sem_deal_wakeup);
+        sem_post(&shmPtr->shmSem);
+    }
+}
 
 void ImageIden::doWhenTimeout1()
 {
 	cout << "Refrash image" << endl;	
 	//刷新图片
-	
-	m_getImg->load("./image/image.jpg");
-	*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+
+    if(ui->grayBox->isChecked())
+	    m_getImg->load("./image/deal_image.jpg");
+    else
+	    m_getImg->load("./image/src_image.jpg");
+        
+    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-
 }
-
 
 void ImageIden::doWhenTimeout2()
 {
-	++m_timeoutCount;
-	cout << "time out 2 " << m_timeoutCount << endl;	
-	
+    ui->saveProgressBar->setValue(shmPtr->wtofile.haveSave);
+
+    if(shmPtr->wtofile.haveSave == shmPtr->wtofile.count)
+    {
+	    ui->leName->setEnabled(true);//
+	    ui->numberSBox->setEnabled(true);//
+        ui->delaySBox->setEnabled(true);
+        ui->btSave->setEnabled(true);//
+
+        ui->saveProgressBar->setVisible(false);//默认进度不可见
+        ui->saveProgressBar->hide();//默认进度不可见，两种设置均无效...
+        timer2->stop();
+    }
 	//延时保存图片定时器触发
-
-	if (m_timeoutCount >= ui->leNumber->text().toInt())
-		timer2->stop();
-
-
 }
