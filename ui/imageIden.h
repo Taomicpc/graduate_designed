@@ -37,8 +37,9 @@ public slots :
 	void btNextPicPushed();
     void enableSaveButton(int value);
 
-	void horizontalAngleSet(); //写入角度
-	void verticalAngleSet();	
+    //用
+    void horiAngleSet(int);
+    void vertAngleSet(int);
 	
 	void setRefrashImage(bool checked);  
 	void setGrayImage(bool checked);  
@@ -47,7 +48,10 @@ public slots :
 	void doWhenTimeout2(); //图片保存延时
 
 signals :
-	void returned();
+	void horiAngleChange(int);
+    void vertAngleChange(int);
+    void returned();
+
 private:
 	Ui::ImageIden *ui;
 	QWSInputMethod *im;	

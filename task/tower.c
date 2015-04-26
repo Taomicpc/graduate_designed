@@ -10,6 +10,10 @@
 #include "assert.h"
 #include "myLib.h"
 #include "public.h"
+#include <unistd.h>
+//#include <system.h>
+//#include <linux/delay.h>
+//#include <sys/wait.h>
 
 //把字符数转换成整形数
 int ctoi(char str[])
@@ -52,12 +56,29 @@ int ctoi(char str[])
 #define CTL_ANGLE_STATE 3
 #define EXIT_STATE 4
 
+#define HORI_MAX_VALUE 2528
+#define HORI_MIN_VALUE 487
+#define HORI_VALUE_PER_DEGREE (HORI_MAX_VALUE - HORI_MIN_VALUE)/180//１度代表的pwm脉宽，特殊用法，带入后先算乘
+
+#define VERT_MAX_VALUE 2558
+#define VERT_MIN_VALUE 596 
+#define VERT_VALUE_PER_DEGREE (VERT_MAX_VALUE - VERT_MIN_VALUE)/180//１度代表的pwm脉宽
+
+#define ACCELERATION 5
+
+//求绝对值的宏函数
+#define ABS(x,y) ( ((x)>(y))? (x)-(y) : (y)-(x) )
+
 int main(int argc, char** argv)
 {   
     int IshmId;
     key_t ipcKey;
     shmType* shmPtr = NULL;
-    
+    int pre_hori_angle = 0;
+    int pre_vert_angle = 0;
+    int hori_pwm_value = 1000;
+    int vert_pwm_value = 1000;
+
     struct Angle
     {
         unsigned long horiAngle ;
@@ -97,6 +118,8 @@ int main(int argc, char** argv)
 
     ioctl(fd, HORIZON_SET, shmPtr->tower.hori_angle);     
     ioctl(fd, VERTIAL_SET, shmPtr->tower.veri_angle);     
+    pre_vert_angle = shmPtr->tower.hori_angle;
+    pre_hori_angle = shmPtr->tower.veri_angle;
 
     printf("Tower process standy!\n");
 
@@ -115,13 +138,49 @@ int main(int argc, char** argv)
             sem_wait(&shmPtr->tower.sem_tower_wakeup);//睡眠等待控制台允许
             printf("Tower process Wakeup!\n");
         }
-        
-        ioctl(fd, HORIZON_SET, shmPtr->tower.hori_angle);     
-        ioctl(fd, VERTIAL_SET, shmPtr->tower.veri_angle);     
     
-        sem_wait(&shmPtr->shmSem);
-        shmPtr->tower.b_tower_running = false; 
-        sem_post(&shmPtr->shmSem);
+        //常用度数转换为pwm脉宽控制值
+        if(ABS(shmPtr->tower.hori_angle, pre_hori_angle) < ACCELERATION)
+        {
+            pre_hori_angle = shmPtr->tower.hori_angle;//绝对值之差小于加速度
+        }
+        else if(shmPtr->tower.hori_angle > pre_hori_angle)
+        {//目标角度比当前大
+            pre_hori_angle += ACCELERATION;
+        }
+        else
+        {//目标角度比当前小
+            pre_hori_angle -= ACCELERATION;
+        }
+
+        if(ABS(shmPtr->tower.veri_angle, pre_vert_angle) < ACCELERATION)
+        {
+            pre_vert_angle = shmPtr->tower.veri_angle;//绝对值之差小于加速度
+        }
+        else if(shmPtr->tower.veri_angle > pre_vert_angle)
+        {//目标角度比当前大
+            pre_vert_angle += ACCELERATION;
+        }
+        else
+        {//目标角度比当前小
+            pre_vert_angle -= ACCELERATION;
+        }
+
+        hori_pwm_value = HORI_MAX_VALUE - (pre_hori_angle * HORI_VALUE_PER_DEGREE);
+        vert_pwm_value = VERT_MAX_VALUE - (pre_vert_angle * VERT_VALUE_PER_DEGREE);
+
+        printf("pre_H_angle: %d , pre_V_angle:%d\n",pre_hori_angle, pre_vert_angle);
+        printf("pre_H_value: %d , pre_V_velue:%d\n", hori_pwm_value ,vert_pwm_value);
+        ioctl(fd, HORIZON_SET, hori_pwm_value);     
+        ioctl(fd, VERTIAL_SET, vert_pwm_value);     
+    
+        if(pre_vert_angle == shmPtr->tower.veri_angle && pre_hori_angle == shmPtr->tower.hori_angle)
+        {//角度一致，更新修改结束
+            sem_wait(&shmPtr->shmSem);
+            shmPtr->tower.b_tower_running = false; 
+            sem_post(&shmPtr->shmSem);
+        }
+        usleep(6000);//ms延时
     }   
     close(fd);
     shmdt(shmPtr);//解除映射关系;

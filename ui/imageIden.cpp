@@ -16,7 +16,7 @@
 #include <iostream>
 #include "imageIden.h"
 
-#define CHANGE_STEP 50//按键改变舵机角度的步长
+#define CHANGE_STEP 5//按键改变舵机角度的步长
 int IshmId;
 shmType* shmPtr = NULL;//设置共享内存的全局变量指针
 
@@ -52,8 +52,8 @@ int shm_init(void)
 
 //共享内存区初始化
     memset(shmPtr, 0, sizeof(shmType));
-    shmPtr->tower.hori_angle = 1000;
-    shmPtr->tower.veri_angle = 1000;//角度信号初始化
+    shmPtr->tower.hori_angle = 90;
+    shmPtr->tower.veri_angle = 90;//角度信号初始化
     shmPtr->wtofile.delay = 1;//默认初始化为1s
     //前一个1表明在进程间使用，后一个1设置一个信号量初始值，1是信号空闲，０是信号忙碌
     sem_init(&shmPtr->shmSem, 1, 1);
@@ -176,10 +176,57 @@ ImageIden::ImageIden(QWidget *parent):
 {
 	ui->setupUi(this);
 	
-	//input
+    printf("prepare to fork process\n");
+    shm_init();//初始化全局共享内存指针。
+    process_create();//创建各需要的进程，必须在上一个共享内存初始化后进行！
+	
+    //input
 	QWSServer::setCurrentInputMethod(im);
 	((TQInputMethod*)im)->setVisible(false);
+
+	//signal and slots
+	connect(ui->actionFromFile, SIGNAL(triggered()), this, SLOT(loadPicture()));
+	connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(buttonQuit()));
+	connect(ui->buttonQuit, SIGNAL(clicked()), this, SLOT(buttonQuit()));
+
+	connect(ui->btUp, SIGNAL(clicked()), this, SLOT(btUpPushed()));	
+	connect(ui->btDown, SIGNAL(clicked()), this, SLOT(btDownPushed()));	
+	connect(ui->btLeft, SIGNAL(clicked()), this, SLOT(btLeftPushed()));	
+	connect(ui->btRight, SIGNAL(clicked()), this, SLOT(btRightPushed()));	
+
+//
+//	connect(ui->btUp, SIGNAL(pressed()), this, SLOT(btUpPushed()));	
+//	connect(ui->btDown, SIGNAL(pressed()), this, SLOT(btDownPushed()));	
+//	connect(ui->btLeft, SIGNAL(pressed()), this, SLOT(btLeftPushed()));	
+//	connect(ui->btRight, SIGNAL(pressed()), this, SLOT(btRightPushed()));	
+//
+
+	connect(ui->btSave, SIGNAL(clicked()), this, SLOT(btSavePushed()));	
+	connect(ui->btPhoto, SIGNAL(clicked()), this, SLOT(btPhotoPushed()));	
+	connect(ui->btNextPic, SIGNAL(clicked()), this, SLOT(btNextPicPushed()));	
+	connect(ui->btPrePic, SIGNAL(clicked()), this, SLOT(btPrePicPushed()));	
+	connect(ui->numberSBox, SIGNAL(valueChanged(int)), this, SLOT(enableSaveButton(int)));	
+//输入文本框数值变化
+    connect(ui->horiValueSBox, SIGNAL(valueChanged(int)), this, SLOT(horiAngleSet(int)));//发出进程命令
+    connect(this, SIGNAL(horiAngleChange(int)), ui->horiValueSBox, SLOT(setValue(int)));//发出进程命令
+	connect(ui->vertValueSBox, SIGNAL(valueChanged(int)), this, SLOT(vertAngleSet(int)));
+    connect(this, SIGNAL(vertAngleChange(int)), ui->vertValueSBox, SLOT(setValue(int)));//发出进程命令
+    
+//滑块等信号变化
+    connect(ui->horiCtlDial, SIGNAL(valueChanged(int)), this, SLOT(horiAngleSet(int)));//发出进程命令
+    connect(this, SIGNAL(horiAngleChange(int)), ui->horiCtlDial, SLOT(setValue(int)));//发出进程命令
+	connect(ui->vertCtlSlider, SIGNAL(valueChanged(int)), this, SLOT(vertAngleSet(int)));
+	connect(this, SIGNAL(vertAngleChange(int)), ui->vertCtlSlider, SLOT(setValue(int)));
+
+	connect(ui->rbRefrashImg, SIGNAL(toggled(bool)), this, SLOT(setRefrashImage(bool)));	
+	connect(ui->grayBox, SIGNAL(toggled(bool)), this, SLOT(setGrayImage(bool)));	
+
+	connect(timer1, SIGNAL(timeout()), this, SLOT(doWhenTimeout1()));
+	timer1->setSingleShot(false); //多次触发
 	
+	connect(timer2, SIGNAL(timeout()), this, SLOT(doWhenTimeout2()));
+	timer2->setSingleShot(false); //多次触发
+
 	//设置背景图
 	QRect screen_size = QApplication::desktop()->screenGeometry(); //get window size
 	QPixmap pix("/opt/gb_ms/picture/background_1.jpg", 0, Qt::AutoColor);
@@ -204,40 +251,26 @@ ImageIden::ImageIden(QWidget *parent):
     ui->numberSBox->setValue(1);//默认采集个数
     ui->btSave->setEnabled(false);//默认不启动
     ui->saveProgressBar->setVisible(false);//默认进度不可见
+//舵机控制部分初始化
+    horiAngleSet(89);//调用自己的成员函数进行初始化
+    horiAngleSet(90);//调用自己的成员函数进行初始化
+    vertAngleSet(89);
+    vertAngleSet(90);
+//    emit horiAngleChange(90);//手动发出更新信号，初始化的时候为了各组件同步
+//    emit vertAngleChange(90);//手动发出更新信号，初始化的时候为了各组件同步
 
-//signal and slots
-	connect(ui->actionFromFile, SIGNAL(triggered()), this, SLOT(loadPicture()));
-	connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(buttonQuit()));
-	connect(ui->buttonQuit, SIGNAL(clicked()), this, SLOT(buttonQuit()));
-
-	connect(ui->btUp, SIGNAL(clicked()), this, SLOT(btUpPushed()));	
-	connect(ui->btDown, SIGNAL(clicked()), this, SLOT(btDownPushed()));	
-	connect(ui->btLeft, SIGNAL(clicked()), this, SLOT(btLeftPushed()));	
-	connect(ui->btRight, SIGNAL(clicked()), this, SLOT(btRightPushed()));	
-	connect(ui->btSave, SIGNAL(clicked()), this, SLOT(btSavePushed()));	
-	connect(ui->btPhoto, SIGNAL(clicked()), this, SLOT(btPhotoPushed()));	
-	connect(ui->btNextPic, SIGNAL(clicked()), this, SLOT(btNextPicPushed()));	
-	connect(ui->btPrePic, SIGNAL(clicked()), this, SLOT(btPrePicPushed()));	
-	connect(ui->numberSBox, SIGNAL(valueChanged(int)), this, SLOT(enableSaveButton(int)));	
-		
-	connect(ui->leHorizontal, SIGNAL(editingFinished()), this, SLOT(horizontalAngleSet()));	
-	connect(ui->leVertical, SIGNAL(editingFinished()), this, SLOT(verticalAngleSet()));	
-		
-	connect(ui->rbRefrashImg, SIGNAL(toggled(bool)), this, SLOT(setRefrashImage(bool)));	
-	connect(ui->grayBox, SIGNAL(toggled(bool)), this, SLOT(setGrayImage(bool)));	
-
-	connect(timer1, SIGNAL(timeout()), this, SLOT(doWhenTimeout1()));
-	timer1->setSingleShot(false); //多次触发
-	
-	connect(timer2, SIGNAL(timeout()), this, SLOT(doWhenTimeout2()));
-	timer2->setSingleShot(false); //多次触发
+    ui->horiValueSBox->setRange(0, 180);//设置角度有效值在０～１８０
+    ui->vertValueSBox->setRange(0, 180);//设置角度有效值在０～１８０
+    ui->horiCtlDial->setRange(0, 180);//设置角度有效值在０～１８０
+    ui->vertCtlSlider->setRange(0, 180);//设置角度有效值在０～１８０
 	
 	m_getImg->load("./image/src_image.jpg");
 	*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	
-    shm_init();//初始化全局共享内存指针。
-    process_create();//创建各需要的进程，必须在上一个共享内存初始化后进行！
+//    printf("prepare to fork process\n");
+//    shm_init();//初始化全局共享内存指针。
+//    process_create();//创建各需要的进程，必须在上一个共享内存初始化后进行！
 }
 
 ImageIden::~ImageIden()
@@ -288,42 +321,22 @@ void ImageIden::buttonQuit()
 void ImageIden::btUpPushed()
 {
 	cout << "up" << endl;
+    int angle = shmPtr->tower.veri_angle;
 
-    sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
-    
-    if((shmPtr->tower.veri_angle + CHANGE_STEP) < 3000)
-    {
-        shmPtr->tower.veri_angle += CHANGE_STEP;//增量为
-    }    
-    else
-        return;//直接返回不作角度修改
+    angle = (angle+CHANGE_STEP)>180? 180: angle+CHANGE_STEP;
 
-    //唤醒进程
-    shmPtr->tower.b_tower_running = true;
-    sem_post(&shmPtr->tower.sem_tower_wakeup);
-    
-    sem_post(&shmPtr->shmSem);
+    vertAngleSet(angle);//调用成员函数进行共享内存读写，若成功修改，则发出更新信号
 }
 
 
 void ImageIden::btDownPushed()
 {
 	cout << "down" << endl;
+    int angle = shmPtr->tower.veri_angle;
 
-    sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
-    
-    if(shmPtr->tower.veri_angle > CHANGE_STEP)
-    {
-        shmPtr->tower.veri_angle -= CHANGE_STEP;//增量为
-    }    
-    else
-        return;//直接返回不作角度修改
+    angle = (angle-CHANGE_STEP)<0? 0: angle-CHANGE_STEP;
 
-    //唤醒进程
-    shmPtr->tower.b_tower_running = true;
-    sem_post(&shmPtr->tower.sem_tower_wakeup);
-    
-    sem_post(&shmPtr->shmSem);
+    vertAngleSet(angle);//调用成员函数进行共享内存读写，若成功修改，则发出更新信号
 }
 
 
@@ -331,42 +344,62 @@ void ImageIden::btLeftPushed()
 {
 	cout << "left" << endl;
 
-    sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
-    
-    if(shmPtr->tower.hori_angle > CHANGE_STEP)
-    {
-        shmPtr->tower.hori_angle -= CHANGE_STEP;//增量为
-    }    
-    else
-        return;//直接返回不作角度修改
+    int angle = shmPtr->tower.hori_angle;
 
-    //唤醒进程
-    shmPtr->tower.b_tower_running = true;
-    sem_post(&shmPtr->tower.sem_tower_wakeup);
-    
-    sem_post(&shmPtr->shmSem);
+    angle = (angle-CHANGE_STEP)<0? 0: angle-CHANGE_STEP;
+
+    horiAngleSet(angle);//调用成员函数进行共享内存读写，若成功修改，则发出更新信号
 }
 
 void ImageIden::btRightPushed()
 {
   	cout << "right" << endl;
 
-    sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
-    
-    if((shmPtr->tower.hori_angle + CHANGE_STEP) < 3000)
-    {
-        shmPtr->tower.hori_angle += CHANGE_STEP;//增量为
-    }    
-    else
-        return;//直接返回不作角度修改
+    int angle = shmPtr->tower.hori_angle;
 
-    //唤醒进程
-    shmPtr->tower.b_tower_running = true;
-    sem_post(&shmPtr->tower.sem_tower_wakeup);
-    
-    sem_post(&shmPtr->shmSem);
+    angle = (angle+CHANGE_STEP)>180? 180: angle+CHANGE_STEP;
+
+    horiAngleSet(angle);//调用成员函数进行共享内存读写，若成功修改，则发出更新信号
 }
 
+
+void ImageIden::horiAngleSet( int newvalue )
+{
+    if( newvalue >= 0 && newvalue <= 180 && newvalue != shmPtr->tower.hori_angle)
+    {
+        sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
+        shmPtr->tower.hori_angle = newvalue;//增量为
+    
+        //唤醒进程
+        shmPtr->tower.b_tower_running = true;
+        sem_post(&shmPtr->tower.sem_tower_wakeup);
+    
+        sem_post(&shmPtr->shmSem);
+
+        emit horiAngleChange(newvalue);//发出水平角度被修改的信号，各控件更新数值
+    }
+    else
+        return;//直接返回不作角度修改
+}
+
+void ImageIden::vertAngleSet( int newvalue )
+{
+    if( newvalue >= 0 && newvalue <= 180 && newvalue != shmPtr->tower.veri_angle)
+    {
+        sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
+        shmPtr->tower.veri_angle = newvalue;//增量为
+    
+        //唤醒进程
+        shmPtr->tower.b_tower_running = true;
+        sem_post(&shmPtr->tower.sem_tower_wakeup);
+    
+        sem_post(&shmPtr->shmSem);
+
+        emit vertAngleChange(newvalue);//发出竖直角度被修改的信号，各控件更新数值
+    }
+    else
+        return;//直接返回不作角度修改
+}
 
 void ImageIden::btSavePushed()
 {
@@ -438,43 +471,6 @@ void ImageIden::btPrePicPushed()
 void ImageIden::btNextPicPushed()
 {
 	cout << "Photo" << endl;
-}
-
-void ImageIden::horizontalAngleSet()
-{
-//	qDebug() << ui->leHorizontal->text();
-    if( ui->leHorizontal->text().toInt() > 0 && ui->leHorizontal->text().toInt() < 3000)
-    {
-        sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
-        shmPtr->tower.hori_angle = ui->leHorizontal->text().toInt();//增量为
-    
-        //唤醒进程
-        shmPtr->tower.b_tower_running = true;
-        sem_post(&shmPtr->tower.sem_tower_wakeup);
-    
-        sem_post(&shmPtr->shmSem);
-    }
-    else
-        return;//直接返回不作角度修改
-}
-
-void ImageIden::verticalAngleSet()
-{
-	//qDebug() << ui->leVertical->text();
-
-    if( ui->leVertical->text().toInt() > 0 && ui->leVertical->text().toInt() < 3000)
-    {
-        sem_wait(&shmPtr->shmSem);//需要修改共享内存角度信息，获取信号量
-        shmPtr->tower.veri_angle = ui->leVertical->text().toInt();//增量为
-    
-        //唤醒进程
-        shmPtr->tower.b_tower_running = true;
-        sem_post(&shmPtr->tower.sem_tower_wakeup);
-    
-        sem_post(&shmPtr->shmSem);
-    }
-    else
-        return;//直接返回不作角度修改
 }
 
 void ImageIden::setRefrashImage(bool checked)
