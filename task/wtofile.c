@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     int count;
 
 //连接到共享内存    
-    ipcKey = ftok("./shm", 'a');
+    ipcKey = ftok("/opt/designed/shm", 'a');
     if(ipcKey == -1)
         perror("ftok error");
 
@@ -32,26 +32,31 @@ int main(int argc, char* argv[])
         return;
     }
 
-    printf("Wtofile process standy!\n");
+    printf("Wtofile process standby!\n");
      
     count = 0;
     while(1)
     {
-        //sem_wait(&shmPtr->shmSem);
-        if(shmPtr->b_endflag == true)
-        {//主程序改变标志位，需要退出
-            break;
-        }
-        
+ 
         if(shmPtr->wtofile.b_wtofile_running == false)
         {
             printf("Wtofile process Sleep!\n");
             sem_wait(&shmPtr->wtofile.sem_wtofile_wakeup);//睡眠等待控制台允许
             printf("Wtofile process Wakeup!\n");
         }
-
+        //sem_wait(&shmPtr->shmSem);
+        if(shmPtr->b_endflag == true)
+        {//主程序改变标志位，需要退出
+            break;
+        }
+       
         jpgnum = shmPtr->wtofile.count;
-        
+            
+        sem_wait(&shmPtr->shmSem);//获得共享内存的使用权利
+        shmPtr->wtofile.haveSave = 0;
+        //printf("wakeup! %d\n", shmPtr->b_finishwtofile);
+        sem_post(&shmPtr->shmSem);//释放共享内存区信号        
+
         for(count=0; count<jpgnum;)
         {    
             sem_wait(&shmPtr->wtofile.sem_wtofile_standby);//等待获得写入文件的信号量
@@ -64,7 +69,7 @@ int main(int argc, char* argv[])
             sprintf(filename, "%s%d_%d_%d.jpg", shmPtr->wtofile.name, count, shmPtr->tower.hori_angle, shmPtr->tower.veri_angle);
             //printf("writing %s from 0x%x,jpg size:%d\n", filename, shmPtr->videoBuf[0].picStart,shmPtr->videoBuf[0].imageSize);
             char command[100];
-            sprintf(command, "cp -f ./image/src_image.jpg ./image/%s", filename);
+            sprintf(command, "cp -f /opt/designed/image/src_image.jpg /opt/designed/image/%s", filename);
             printf("prepera to save %s\n",filename);
     
             if(fork() == 0)
@@ -111,6 +116,7 @@ int main(int argc, char* argv[])
     }
 
     shmdt(shmPtr);//解除映射关系;
+    printf("wtofile process exit!\n");
 
     return 0;
 }

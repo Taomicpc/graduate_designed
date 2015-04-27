@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     shmType* shmPtr = NULL;
 
 //连接到共享内存    
-    ipcKey = ftok("./shm", 'a');
+    ipcKey = ftok("/opt/designed/shm", 'a');
     if(ipcKey == -1)
         perror("ftok error");
 
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 		printf("Picture:Width = %d   Height = %d\n", v4l2Fmt.fmt.pix.width, v4l2Fmt.fmt.pix.height);
 	}
 
-    printf("Input process standy!\n");
+    printf("Input process standby!\n");
 
     numBufs = 0;
     while(1)
@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
 
        sem_wait(&shmPtr->input.sem_wr_enable);//获得可修改图像信号量
        
-       if((writeImageFd = fopen("./image/src_image.jpg", "wb")) < 0)
+       if((writeImageFd = fopen("/opt/designed/image/src_image.jpg", "wb")) < 0)
        {
        	printf("Unable to create y frame recording file\n");
        	return -1;
@@ -212,5 +212,8 @@ int main(int argc, char* argv[])
     shmdt(shmPtr);//解除映射关系;
 
 	close(videoFd);                         //关闭摄像头设备
+    printf("input process exit!\n");
+
+    exit(0);
 }
     

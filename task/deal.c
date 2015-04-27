@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     int row_stride;//每行字节数
 
 //连接到共享内存    
-    ipcKey = ftok("./shm", 'a');
+    ipcKey = ftok("/opt/designed/shm", 'a');
     if(ipcKey == -1)
         perror("ftok error");
 
@@ -73,17 +73,10 @@ int main(int argc, char* argv[])
         return;
     } 
 
-    printf("deal process standy!\n");
+    printf("deal process standby!\n");
 
     while(1)
     {
-        //sem_wait(&shmPtr->shmSem);
-        if(shmPtr->b_endflag == true)
-        {//主程序改变标志位，需要退出
-            //sem_post(&shmPtr->shmSem);
-            break;
-        }
-
         if(shmPtr->deal.b_deal_running == false)
         {
             printf("deal process Sleep!\n");
@@ -91,19 +84,26 @@ int main(int argc, char* argv[])
             printf("deal process Wakeup!\n");
         }
         
+        //sem_wait(&shmPtr->shmSem);
+        if(shmPtr->b_endflag == true)
+        {//主程序改变标志位，需要退出
+            //sem_post(&shmPtr->shmSem);
+            break;
+        }
+       
         sem_wait(&shmPtr->deal.sem_deal_standby);//等待获得写入lcd的信号量
 
         //每次解压完一张图像后,都要关闭文件,否则直接操作可能会报Not a JPEG file: starts with 0x93
         //0x80
-        if((inImageFd = fopen("./image/src_image.jpg", "rb")) == NULL)
+        if((inImageFd = fopen("/opt/designed/image/src_image.jpg", "rb")) == NULL)
         {
-    	    fprintf(stderr, "deal.c open %s failed\n", "./image/src_image.jpg");
+    	    fprintf(stderr, "deal.c open %s failed\n", "/opt/designed/image/src_image.jpg");
     	    exit(-1);
         }
     
-        if((outImageFd = fopen("./image/deal_image.jpg", "wb")) == NULL)
+        if((outImageFd = fopen("/opt/designed/image/deal_buf.jpg", "wb")) == NULL)
         {
-    	    fprintf(stderr, "deal.c open %s failed\n", "./image/deal_image.jpg");
+    	    fprintf(stderr, "deal.c open %s failed\n", "/opt/designed/image/deal_buf.jpg");
     	    exit(-1);
         }
       
@@ -170,14 +170,19 @@ int main(int argc, char* argv[])
         sem_wait(&shmPtr->shmSem);
        // printf("finish deal\n");
         shmPtr->deal.b_finish_deal = true;
+        //if(shmPtr->deal.b_need_to_show)
+        //    sem_post(&shmPtr->deal.sem_deal_finish);
         sem_post(&shmPtr->shmSem);
  
 	    //关闭Jpeg输入文件
 	    fclose(inImageFd);
         fclose(outImageFd);
+        
+        system( "cp -f /opt/designed/image/deal_buf.jpg /opt/designed/image/deal_image.jpg");
     }
     
     shmdt(shmPtr);//解除映射关系;
+    printf("deal process exit!\n");
 
     return 0;
 }

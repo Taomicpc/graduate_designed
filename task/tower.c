@@ -64,7 +64,7 @@ int ctoi(char str[])
 #define VERT_MIN_VALUE 596 
 #define VERT_VALUE_PER_DEGREE (VERT_MAX_VALUE - VERT_MIN_VALUE)/180//１度代表的pwm脉宽
 
-#define ACCELERATION 5
+#define ACCELERATION 1
 
 //求绝对值的宏函数
 #define ABS(x,y) ( ((x)>(y))? (x)-(y) : (y)-(x) )
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     int fd=3;
 
 //连接到共享内存    
-    ipcKey = ftok("./shm", 'a');
+    ipcKey = ftok("/opt/designed/shm", 'a');
     if(ipcKey == -1)
         perror("ftok error");
 
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
     pre_vert_angle = shmPtr->tower.hori_angle;
     pre_hori_angle = shmPtr->tower.veri_angle;
 
-    printf("Tower process standy!\n");
+    printf("Tower process standby!\n");
 
     while(1)
     {
@@ -169,8 +169,6 @@ int main(int argc, char** argv)
         hori_pwm_value = HORI_MAX_VALUE - (pre_hori_angle * HORI_VALUE_PER_DEGREE);
         vert_pwm_value = VERT_MAX_VALUE - (pre_vert_angle * VERT_VALUE_PER_DEGREE);
 
-        printf("pre_H_angle: %d , pre_V_angle:%d\n",pre_hori_angle, pre_vert_angle);
-        printf("pre_H_value: %d , pre_V_velue:%d\n", hori_pwm_value ,vert_pwm_value);
         ioctl(fd, HORIZON_SET, hori_pwm_value);     
         ioctl(fd, VERTIAL_SET, vert_pwm_value);     
     
@@ -180,10 +178,11 @@ int main(int argc, char** argv)
             shmPtr->tower.b_tower_running = false; 
             sem_post(&shmPtr->shmSem);
         }
-        usleep(6000);//ms延时
+        usleep(5000);//ms延时
     }   
     close(fd);
     shmdt(shmPtr);//解除映射关系;
+    printf("tower process exit!\n");
     
     return 0;
 }

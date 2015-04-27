@@ -79,9 +79,11 @@ typedef struct
     //此用法是posix的无名信号量头文件是：<semaphore.h>
     sem_t sem_deal_wakeup;//本地jpg读写的信号量
     sem_t sem_deal_standby;//本地jpg读写的信号量
+//    sem_t sem_deal_finish;//本地jpg读写的信号量
 
     bool b_deal_running;
     bool b_finish_deal;
+//    bool b_need_to_show;
 }deal_info_type;
 
 typedef struct

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'imageIden.ui'
 **
-** Created: Sun Apr 26 09:55:42 2015
+** Created: Mon Apr 27 17:17:51 2015
 **      by: Qt User Interface Compiler version 4.5.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -77,6 +77,7 @@ public:
     QProgressBar *saveProgressBar;
     QPushButton *btPrePic;
     QPushButton *btNextPic;
+    QLabel *label_7;
     QMenuBar *menubar;
     QMenu *menuFile;
 
@@ -84,7 +85,7 @@ public:
     {
         if (ImageIden->objectName().isEmpty())
             ImageIden->setObjectName(QString::fromUtf8("ImageIden"));
-        ImageIden->resize(788, 450);
+        ImageIden->resize(788, 480);
         ImageIden->setMaximumSize(QSize(800, 480));
         QFont font;
         font.setPointSize(12);
@@ -130,7 +131,7 @@ public:
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         buttonQuit = new QPushButton(centralwidget);
         buttonQuit->setObjectName(QString::fromUtf8("buttonQuit"));
-        buttonQuit->setGeometry(QRect(640, 360, 81, 32));
+        buttonQuit->setGeometry(QRect(640, 400, 81, 32));
         QFont font2;
         font2.setFamily(QString::fromUtf8("WenQuanYi Micro Hei"));
         font2.setBold(false);
@@ -138,11 +139,11 @@ public:
         buttonQuit->setFont(font2);
         labelPicture = new QLabel(centralwidget);
         labelPicture->setObjectName(QString::fromUtf8("labelPicture"));
-        labelPicture->setGeometry(QRect(30, 30, 250, 301));
+        labelPicture->setGeometry(QRect(30, 70, 250, 301));
         labelPicture->setFont(font2);
         groupBox = new QGroupBox(centralwidget);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        groupBox->setGeometry(QRect(290, 30, 471, 191));
+        groupBox->setGeometry(QRect(290, 60, 471, 191));
         groupBox->setFont(font2);
         btUp = new QPushButton(groupBox);
         btUp->setObjectName(QString::fromUtf8("btUp"));
@@ -193,30 +194,30 @@ public:
         vertValueSBox->setGeometry(QRect(370, 40, 51, 21));
         groupBox_2 = new QGroupBox(centralwidget);
         groupBox_2->setObjectName(QString::fromUtf8("groupBox_2"));
-        groupBox_2->setGeometry(QRect(290, 230, 471, 121));
+        groupBox_2->setGeometry(QRect(290, 260, 471, 121));
         groupBox_2->setFont(font2);
         leName = new QLineEdit(groupBox_2);
         leName->setObjectName(QString::fromUtf8("leName"));
-        leName->setGeometry(QRect(130, 40, 91, 27));
+        leName->setGeometry(QRect(130, 30, 91, 27));
         label = new QLabel(groupBox_2);
         label->setObjectName(QString::fromUtf8("label"));
-        label->setGeometry(QRect(80, 40, 41, 31));
+        label->setGeometry(QRect(90, 30, 41, 31));
         label_3 = new QLabel(groupBox_2);
         label_3->setObjectName(QString::fromUtf8("label_3"));
-        label_3->setGeometry(QRect(290, 40, 61, 31));
+        label_3->setGeometry(QRect(310, 40, 61, 31));
         label_4 = new QLabel(groupBox_2);
         label_4->setObjectName(QString::fromUtf8("label_4"));
-        label_4->setGeometry(QRect(290, 80, 61, 31));
+        label_4->setGeometry(QRect(310, 80, 61, 31));
         label_5 = new QLabel(groupBox_2);
         label_5->setObjectName(QString::fromUtf8("label_5"));
         label_5->setGeometry(QRect(430, 80, 21, 31));
         btSave = new QPushButton(groupBox_2);
         btSave->setObjectName(QString::fromUtf8("btSave"));
-        btSave->setGeometry(QRect(170, 90, 100, 29));
+        btSave->setGeometry(QRect(170, 80, 100, 31));
         btSave->setFont(font2);
         btPhoto = new QPushButton(groupBox_2);
         btPhoto->setObjectName(QString::fromUtf8("btPhoto"));
-        btPhoto->setGeometry(QRect(50, 90, 98, 27));
+        btPhoto->setGeometry(QRect(50, 80, 98, 31));
         numberSBox = new QSpinBox(groupBox_2);
         numberSBox->setObjectName(QString::fromUtf8("numberSBox"));
         numberSBox->setGeometry(QRect(350, 40, 71, 27));
@@ -225,7 +226,7 @@ public:
         delaySBox->setGeometry(QRect(350, 80, 71, 27));
         layoutWidget = new QWidget(centralwidget);
         layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
-        layoutWidget->setGeometry(QRect(30, 350, 263, 29));
+        layoutWidget->setGeometry(QRect(30, 390, 263, 29));
         horizontalLayout = new QHBoxLayout(layoutWidget);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         horizontalLayout->setContentsMargins(0, 0, 0, 0);
@@ -242,21 +243,33 @@ public:
 
         saveProgressBar = new QProgressBar(centralwidget);
         saveProgressBar->setObjectName(QString::fromUtf8("saveProgressBar"));
-        saveProgressBar->setGeometry(QRect(340, 360, 221, 23));
+        saveProgressBar->setGeometry(QRect(340, 400, 221, 23));
         saveProgressBar->setValue(24);
         saveProgressBar->setTextVisible(true);
         btPrePic = new QPushButton(centralwidget);
         btPrePic->setObjectName(QString::fromUtf8("btPrePic"));
-        btPrePic->setGeometry(QRect(40, 50, 101, 281));
+        btPrePic->setGeometry(QRect(30, 320, 121, 51));
         btNextPic = new QPushButton(centralwidget);
         btNextPic->setObjectName(QString::fromUtf8("btNextPic"));
-        btNextPic->setGeometry(QRect(150, 50, 101, 281));
+        btNextPic->setGeometry(QRect(160, 320, 121, 51));
+        label_7 = new QLabel(centralwidget);
+        label_7->setObjectName(QString::fromUtf8("label_7"));
+        label_7->setGeometry(QRect(290, 10, 311, 41));
+        QFont font4;
+        font4.setPointSize(12);
+        label_7->setFont(font4);
         ImageIden->setCentralWidget(centralwidget);
         menubar = new QMenuBar(ImageIden);
         menubar->setObjectName(QString::fromUtf8("menubar"));
         menubar->setGeometry(QRect(0, 0, 788, 30));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
+        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(menuFile->sizePolicy().hasHeightForWidth());
+        menuFile->setSizePolicy(sizePolicy);
+        menuFile->setBaseSize(QSize(13, 16));
         ImageIden->setMenuBar(menubar);
 
         menubar->addAction(menuFile->menuAction());
@@ -303,6 +316,7 @@ public:
         rbRefrashImg->setText(QApplication::translate("ImageIden", "\345\256\232\346\227\266\345\210\267\346\226\260\345\233\276\345\203\217", 0, QApplication::UnicodeUTF8));
         btPrePic->setText(QString());
         btNextPic->setText(QString());
+        label_7->setText(QApplication::translate("ImageIden", "\346\257\225\344\270\232\350\256\276\350\256\241\357\274\277\345\233\276\345\203\217\351\207\207\351\233\206\347\263\273\347\273\237", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("ImageIden", "\346\226\207\344\273\266", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 

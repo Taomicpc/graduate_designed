@@ -16,7 +16,7 @@
 #include <iostream>
 #include "imageIden.h"
 
-#define CHANGE_STEP 5//按键改变舵机角度的步长
+#define CHANGE_STEP 2//按键改变舵机角度的步长
 int IshmId;
 shmType* shmPtr = NULL;//设置共享内存的全局变量指针
 
@@ -27,7 +27,7 @@ int shm_init(void)
 //--------------共享内存建立链接--------------------
     key_t ipcKey;
 
-    ipcKey = ftok("./shm", 'a');
+    ipcKey = ftok("/opt/designed/shm", 'a');
     if(ipcKey == -1)
     {
         perror("ftok error");
@@ -64,6 +64,7 @@ int shm_init(void)
     sem_init(&shmPtr->wtofile.sem_wtofile_wakeup, 1, 0);
     sem_init(&shmPtr->wtolcd.sem_wtolcd_wakeup, 1, 0);
     sem_init(&shmPtr->deal.sem_deal_wakeup, 1, 0);
+    //sem_init(&shmPtr->deal.sem_deal_finish, 1, 0);
     sem_init(&shmPtr->tower.sem_tower_wakeup, 1, 0);
 
     //与上面信号量相对应的布尔量初始化
@@ -74,6 +75,7 @@ int shm_init(void)
     shmPtr->wtofile.b_wtofile_running = false; 
     shmPtr->wtolcd.b_wtolcd_running = false; 
     shmPtr->deal.b_deal_running = false; 
+    //shmPtr->deal.b_need_to_show = false; 
     shmPtr->tower.b_tower_running = false; 
 
 //信号量初始化为忙碌，用于image.jpg读写的信号同步。
@@ -105,32 +107,32 @@ int process_create(void)
 
     sprintf(SshmId, "%d", IshmId);
 
-    char* execvInput[] = {"./input", NULL};
-    char* execvWtoFile[] = {"./wtofile",NULL};
-    char* execvDeal[] = {"./deal", SshmId, NULL};
-    char* execvTower[] = {"./tower", SshmId, NULL};
+    char* execvInput[] = {"/opt/designed/input", NULL};
+    char* execvWtoFile[] = {"/opt/designed/wtofile",NULL};
+    char* execvDeal[] = {"/opt/designed/deal", NULL};
+    char* execvTower[] = {"/opt/designed/tower", NULL};
 
     if(fork()==0)//写入子进程,初始化后进入睡眠状态
     {
-        execv("./tower", execvTower);//启动共享资源写入进程
+        execv("/opt/designed/tower", execvTower);//启动共享资源写入进程
         perror("execv tower error");
     }
     
     if(fork()==0)//写入子进程,初始化后进入睡眠状态
     {
-        execv("./input", execvInput);//启动共享资源写入进程
+        execv("/opt/designed/input", execvInput);//启动共享资源写入进程
         perror("execv input error");
     }
 
     if(fork()==0)//缓冲区数据显示到lcd
     {
-        execv("./wtofile", execvWtoFile);//启动共享资源写入进程
+        execv("/opt/designed/wtofile", execvWtoFile);//启动共享资源写入进程
         perror("execv wtofile error");
     }
 
     if(fork()==0)//图像处理进程
     {
-        execv("./deal", execvDeal);//启动共享资源写入进程
+        execv("/opt/designed/deal", execvDeal);//启动共享资源写入进程
         perror("execv deal error");
     }
 
@@ -146,7 +148,7 @@ int process_destroy( void )
     //给各进程信号量，唤醒休眠进程
     sem_post(&shmPtr->input.sem_input_wakeup);//开始video更新
     sem_post(&shmPtr->wtofile.sem_wtofile_wakeup);//开始video更新
-    sem_post(&shmPtr->wtolcd.sem_wtolcd_wakeup);//开始video更新
+//    sem_post(&shmPtr->wtolcd.sem_wtolcd_wakeup);//开始video更新
     sem_post(&shmPtr->deal.sem_deal_wakeup);//开始video更新
     sem_post(&shmPtr->tower.sem_tower_wakeup);//开始video更新
     //给各进程信号量，唤醒休眠进程
@@ -194,12 +196,15 @@ ImageIden::ImageIden(QWidget *parent):
 	connect(ui->btLeft, SIGNAL(clicked()), this, SLOT(btLeftPushed()));	
 	connect(ui->btRight, SIGNAL(clicked()), this, SLOT(btRightPushed()));	
 
-//
-//	connect(ui->btUp, SIGNAL(pressed()), this, SLOT(btUpPushed()));	
-//	connect(ui->btDown, SIGNAL(pressed()), this, SLOT(btDownPushed()));	
-//	connect(ui->btLeft, SIGNAL(pressed()), this, SLOT(btLeftPushed()));	
-//	connect(ui->btRight, SIGNAL(pressed()), this, SLOT(btRightPushed()));	
-//
+	connect(ui->btUp, SIGNAL(pressed()), this, SLOT(startPushPoll()));	
+	connect(ui->btDown, SIGNAL(pressed()), this, SLOT(startPushPoll()));	
+	connect(ui->btLeft, SIGNAL(pressed()), this, SLOT(startPushPoll()));	
+	connect(ui->btRight, SIGNAL(pressed()), this, SLOT(startPushPoll()));	
+
+	connect(ui->btUp, SIGNAL(released()), this, SLOT(stopPushPoll()));	
+	connect(ui->btDown, SIGNAL(released()), this, SLOT(stopPushPoll()));	
+	connect(ui->btLeft, SIGNAL(released()), this, SLOT(stopPushPoll()));	
+	connect(ui->btRight, SIGNAL(released()), this, SLOT(stopPushPoll()));	
 
 	connect(ui->btSave, SIGNAL(clicked()), this, SLOT(btSavePushed()));	
 	connect(ui->btPhoto, SIGNAL(clicked()), this, SLOT(btPhotoPushed()));	
@@ -207,9 +212,9 @@ ImageIden::ImageIden(QWidget *parent):
 	connect(ui->btPrePic, SIGNAL(clicked()), this, SLOT(btPrePicPushed()));	
 	connect(ui->numberSBox, SIGNAL(valueChanged(int)), this, SLOT(enableSaveButton(int)));	
 //输入文本框数值变化
-    connect(ui->horiValueSBox, SIGNAL(valueChanged(int)), this, SLOT(horiAngleSet(int)));//发出进程命令
+    connect(ui->horiValueSBox, SIGNAL(editingFinished()), this, SLOT(horiSBoxInput()));//发出进程命令
     connect(this, SIGNAL(horiAngleChange(int)), ui->horiValueSBox, SLOT(setValue(int)));//发出进程命令
-	connect(ui->vertValueSBox, SIGNAL(valueChanged(int)), this, SLOT(vertAngleSet(int)));
+	connect(ui->vertValueSBox, SIGNAL(editingFinished()), this, SLOT(vertSBoxInput()));
     connect(this, SIGNAL(vertAngleChange(int)), ui->vertValueSBox, SLOT(setValue(int)));//发出进程命令
     
 //滑块等信号变化
@@ -224,12 +229,11 @@ ImageIden::ImageIden(QWidget *parent):
 	connect(timer1, SIGNAL(timeout()), this, SLOT(doWhenTimeout1()));
 	timer1->setSingleShot(false); //多次触发
 	
-	connect(timer2, SIGNAL(timeout()), this, SLOT(doWhenTimeout2()));
 	timer2->setSingleShot(false); //多次触发
 
 	//设置背景图
 	QRect screen_size = QApplication::desktop()->screenGeometry(); //get window size
-	QPixmap pix("/opt/gb_ms/picture/background_1.jpg", 0, Qt::AutoColor);
+	QPixmap pix("/opt/designed/background_1.jpg", 0, Qt::AutoColor);
 	pix = pix.scaled(screen_size.width(), screen_size.height(), Qt::IgnoreAspectRatio); //photo size
 	QPalette palette;
 	palette.setBrush(backgroundRole(), QBrush(pix));
@@ -256,21 +260,17 @@ ImageIden::ImageIden(QWidget *parent):
     horiAngleSet(90);//调用自己的成员函数进行初始化
     vertAngleSet(89);
     vertAngleSet(90);
-//    emit horiAngleChange(90);//手动发出更新信号，初始化的时候为了各组件同步
-//    emit vertAngleChange(90);//手动发出更新信号，初始化的时候为了各组件同步
 
     ui->horiValueSBox->setRange(0, 180);//设置角度有效值在０～１８０
     ui->vertValueSBox->setRange(0, 180);//设置角度有效值在０～１８０
     ui->horiCtlDial->setRange(0, 180);//设置角度有效值在０～１８０
     ui->vertCtlSlider->setRange(0, 180);//设置角度有效值在０～１８０
 	
-	m_getImg->load("./image/src_image.jpg");
+	m_getImg->load("/opt/designed/image/src_image.jpg");
 	*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-	
-//    printf("prepare to fork process\n");
-//    shm_init();//初始化全局共享内存指针。
-//    process_create();//创建各需要的进程，必须在上一个共享内存初始化后进行！
+
+    setWindowState(Qt::WindowFullScreen);//窗口最大化
 }
 
 ImageIden::~ImageIden()
@@ -362,6 +362,55 @@ void ImageIden::btRightPushed()
     horiAngleSet(angle);//调用成员函数进行共享内存读写，若成功修改，则发出更新信号
 }
 
+void ImageIden::startPushPoll()
+{//查询常按
+  	cout << "long push poll start" << endl;
+
+    connect(timer2, SIGNAL(timeout()), this, SLOT(longPushPoll()));
+ //   if(!timer2->isActive())
+    timer2->start(100);//启动定时器进行按键状态轮询，时间越小，加减越快．	
+}
+
+void ImageIden::stopPushPoll()
+{//查询常按
+  	cout << "long push poll stop" << endl;
+
+    disconnect(timer2, SIGNAL(timeout()), this, SLOT(longPushPoll()));
+    
+//    timer2->stop();//启动定时器进行按键状态轮询，时间越小，加减越快．	
+}
+
+void ImageIden::longPushPoll()
+{//查询常按
+  	cout << "long pushing" << endl;
+
+    if(ui->btUp->isDown())
+    {
+        btUpPushed();
+    }
+    else if(ui->btDown->isDown())
+    {
+        btDownPushed();
+    }
+    else if(ui->btLeft->isDown())
+    {
+        btLeftPushed();
+    }
+    else if(ui->btRight->isDown())
+    {
+        btRightPushed();
+    }
+}
+
+void ImageIden::horiSBoxInput()
+{
+    horiAngleSet(ui->horiValueSBox->text().toInt());
+}
+
+void ImageIden::vertSBoxInput()
+{
+    vertAngleSet(ui->vertValueSBox->text().toInt());
+}
 
 void ImageIden::horiAngleSet( int newvalue )
 {
@@ -424,6 +473,8 @@ void ImageIden::btSavePushed()
     ui->delaySBox->setEnabled(false);
     ui->btSave->setEnabled(false);//
 
+    connect(timer2, SIGNAL(timeout()), this, SLOT(saveProgressPoll()));
+//    if(!timer2->isActive())
     timer2->start(500);//启动定时器进行刷新，更新进度条	
     ui->saveProgressBar->setRange(0, ui->numberSBox->value());
     ui->saveProgressBar->setVisible(true);//设置进度条可见
@@ -444,11 +495,11 @@ void ImageIden::btPhotoPushed()
 			timer1->stop();
 
     if(ui->grayBox->isChecked())
-        system("cp -f ./image/deal_image.jpg ./image/photo.jpg");
+        system("cp -f /opt/designed/image/deal_image.jpg /opt/designed/image/photo.jpg");
     else
-        system("cp -f ./image/src_image.jpg ./image/photo.jpg");
+        system("cp -f /opt/designed/image/src_image.jpg /opt/designed/image/photo.jpg");
 
-	m_getImg->load("./image/photo.jpg");
+	m_getImg->load("/opt/designed/image/photo.jpg");
     *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
@@ -480,7 +531,7 @@ void ImageIden::setRefrashImage(bool checked)
 		cout << "checked" << endl;
 		if ( !(timer1->isActive()) )
 		{
-		        timer1->start(200);	
+		        timer1->start(50);	
 		}
 	}
 	else
@@ -514,15 +565,23 @@ void ImageIden::doWhenTimeout1()
 	//刷新图片
 
     if(ui->grayBox->isChecked())
-	    m_getImg->load("./image/deal_image.jpg");
+    {
+        //shmPtr->deal.b_need_to_show = true; 
+        //sem_wait(&shmPtr->deal.sem_deal_finish);
+        //忙等待会使程序卡死.
+        //while(!shmPtr->deal.b_finish_deal);//忙等待一张图像处理完毕
+        m_getImg->load("/opt/designed/image/deal_image.jpg");
+    
+        //shmPtr->deal.b_need_to_show = false; 
+    }
     else
-	    m_getImg->load("./image/src_image.jpg");
+	    m_getImg->load("/opt/designed/image/src_image.jpg");
         
     *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
 
-void ImageIden::doWhenTimeout2()
+void ImageIden::saveProgressPoll()
 {
     ui->saveProgressBar->setValue(shmPtr->wtofile.haveSave);
 
@@ -536,6 +595,8 @@ void ImageIden::doWhenTimeout2()
         ui->saveProgressBar->setVisible(false);//默认进度不可见
         ui->saveProgressBar->hide();//默认进度不可见，两种设置均无效...
         timer2->stop();
+
+	    disconnect(timer2, SIGNAL(timeout()), this, SLOT(saveProgressPoll()));
     }
 	//延时保存图片定时器触发
 }

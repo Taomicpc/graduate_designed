@@ -1,6 +1,6 @@
 /****************************************************************************
 ** object : ImageIden 
- ** ±ÏÒµÉè¼ÆÈı¼¶²Ëµ¥¡¡Í¼ÏñÊ¶±ğ - ht
+ ** æ¯•ä¸šè®¾è®¡ä¸‰çº§èœå•ã€€å›¾åƒè¯†åˆ« - ht
  ** by luchaodong
  ** class Ui::ImageIden : public Ui_ImageIden {}
  ** ImageIden 
@@ -31,21 +31,28 @@ public slots :
 	void btDownPushed();
 	void btLeftPushed();
 	void btRightPushed();
+    void startPushPoll();
+    void stopPushPoll();
+
 	void btSavePushed();
 	void btPhotoPushed();
 	void btPrePicPushed();
 	void btNextPicPushed();
     void enableSaveButton(int value);
 
-    //ÓÃ
+    void horiSBoxInput();
+    void vertSBoxInput();
+
+    //ç”¨
     void horiAngleSet(int);
     void vertAngleSet(int);
 	
 	void setRefrashImage(bool checked);  
 	void setGrayImage(bool checked);  
 
-	void doWhenTimeout1(); //¶¨Ê±Ë¢ĞÂÍ¼Æ¬
-	void doWhenTimeout2(); //Í¼Æ¬±£´æÑÓÊ±
+	void doWhenTimeout1(); //å®šæ—¶åˆ·æ–°å›¾ç‰‡
+	void saveProgressPoll(); //progress poll
+	void longPushPoll(); //progress poll
 
 signals :
 	void horiAngleChange(int);
@@ -57,7 +64,7 @@ private:
 	QWSInputMethod *im;	
 	QImage *m_getImg;  //load picture from file
 	QTimer *timer1;
-	QTimer *timer2;
+	QTimer *timer2;//å®šæ—¶å™¨2åŠ¨æ€æŒ‚è½½å‡½æ•°ä»»åŠ¡ï¼Œä¸»è¦ç”¨äºå®šæ—¶è½®è¯¢å„ç§çŠ¶æ€
 	int m_timeoutCount;
 
 };
