@@ -11,9 +11,29 @@
 #include "myLib.h"
 #include "public.h"
 #include <unistd.h>
-//#include <system.h>
-//#include <linux/delay.h>
-//#include <sys/wait.h>
+
+#define S_HORIZON 1
+#define S_VERTICAL 0
+
+//ioctl的指令
+#define HORIZON (0x1<<31)
+#define VERTIAL (0x0)
+
+#define HORIZON_ON (HORIZON | 0x1)
+#define HORIZON_OFF (HORIZON & (~0x1))
+#define HORIZON_SET (HORIZON_ON | (0x1<<1))
+
+#define VERTIAL_ON (VERTIAL | 0x1)
+#define VERTIAL_OFF (VERTIAL & (~0x1))
+#define VERTIAL_SET (VERTIAL_ON | (0x1<<1))
+//读寄存器的值
+#define HORI_MAX_VALUE 2528
+#define HORI_MIN_VALUE 487
+#define HORI_VALUE_PER_DEGREE (HORI_MAX_VALUE - HORI_MIN_VALUE)/180//１度代表的pwm脉宽，特殊用法，带入后先算乘
+
+#define VERT_MAX_VALUE 2558
+#define VERT_MIN_VALUE 596 
+#define VERT_VALUE_PER_DEGREE (VERT_MAX_VALUE - VERT_MIN_VALUE)/180//１度代表的pwm脉宽
 
 //把字符数转换成整形数
 int ctoi(char str[])
@@ -31,43 +51,6 @@ int ctoi(char str[])
 
     return result;
 }
-#define S_HORIZON 1
-#define S_VERTICAL 0
-
-#define HORIZON (0x1<<31)
-#define VERTIAL (0x0)
-
-#define HORIZON_ON (HORIZON | 0x1)
-#define HORIZON_OFF (HORIZON & (~0x1))
-#define HORIZON_SET (HORIZON_ON | (0x1<<1))
-
-#define VERTIAL_ON (VERTIAL | 0x1)
-#define VERTIAL_OFF (VERTIAL & (~0x1))
-#define VERTIAL_SET (VERTIAL_ON | (0x1<<1))
-//读寄存器的值
-//
-#define S3C6410_TCMPB0 0 
-#define S3C6410_TCMPB1 1
-#define CHANGE_STEP 50
-//状态机的状态
-#define INIT_STATE 0
-#define MENU_STATE 1
-#define SET_ANGLE_STATE 2
-#define CTL_ANGLE_STATE 3
-#define EXIT_STATE 4
-
-#define HORI_MAX_VALUE 2528
-#define HORI_MIN_VALUE 487
-#define HORI_VALUE_PER_DEGREE (HORI_MAX_VALUE - HORI_MIN_VALUE)/180//１度代表的pwm脉宽，特殊用法，带入后先算乘
-
-#define VERT_MAX_VALUE 2558
-#define VERT_MIN_VALUE 596 
-#define VERT_VALUE_PER_DEGREE (VERT_MAX_VALUE - VERT_MIN_VALUE)/180//１度代表的pwm脉宽
-
-#define ACCELERATION 1
-
-//求绝对值的宏函数
-#define ABS(x,y) ( ((x)>(y))? (x)-(y) : (y)-(x) )
 
 int main(int argc, char** argv)
 {   
@@ -112,14 +95,13 @@ int main(int argc, char** argv)
     fd=open("/dev/taoTower",O_RDWR);
     if(fd<0)
     {
-        printf("API join error");
+        printf("taoTower driver open error");
         exit(1);
     }
 
-    ioctl(fd, HORIZON_SET, shmPtr->tower.hori_angle);     
-    ioctl(fd, VERTIAL_SET, shmPtr->tower.veri_angle);     
-    pre_vert_angle = shmPtr->tower.hori_angle;
-    pre_hori_angle = shmPtr->tower.veri_angle;
+    //初始化角度为９０度左右
+    ioctl(fd, HORIZON_SET, (HORI_MAX_VALUE+HORI_MIN_VALUE)/2 );     
+    ioctl(fd, VERTIAL_SET, (VERT_MAX_VALUE+VERT_MIN_VALUE)/2 );     
 
     printf("Tower process standby!\n");
 
@@ -139,46 +121,16 @@ int main(int argc, char** argv)
             printf("Tower process Wakeup!\n");
         }
     
-        //常用度数转换为pwm脉宽控制值
-        if(ABS(shmPtr->tower.hori_angle, pre_hori_angle) < ACCELERATION)
-        {
-            pre_hori_angle = shmPtr->tower.hori_angle;//绝对值之差小于加速度
-        }
-        else if(shmPtr->tower.hori_angle > pre_hori_angle)
-        {//目标角度比当前大
-            pre_hori_angle += ACCELERATION;
-        }
-        else
-        {//目标角度比当前小
-            pre_hori_angle -= ACCELERATION;
-        }
-
-        if(ABS(shmPtr->tower.veri_angle, pre_vert_angle) < ACCELERATION)
-        {
-            pre_vert_angle = shmPtr->tower.veri_angle;//绝对值之差小于加速度
-        }
-        else if(shmPtr->tower.veri_angle > pre_vert_angle)
-        {//目标角度比当前大
-            pre_vert_angle += ACCELERATION;
-        }
-        else
-        {//目标角度比当前小
-            pre_vert_angle -= ACCELERATION;
-        }
-
-        hori_pwm_value = HORI_MAX_VALUE - (pre_hori_angle * HORI_VALUE_PER_DEGREE);
-        vert_pwm_value = VERT_MAX_VALUE - (pre_vert_angle * VERT_VALUE_PER_DEGREE);
+//应用层直接赋值，由底层实现加减速
+        hori_pwm_value = HORI_MAX_VALUE - (shmPtr->tower.hori_angle * HORI_VALUE_PER_DEGREE);
+        vert_pwm_value = VERT_MAX_VALUE - (shmPtr->tower.veri_angle * VERT_VALUE_PER_DEGREE);
 
         ioctl(fd, HORIZON_SET, hori_pwm_value);     
         ioctl(fd, VERTIAL_SET, vert_pwm_value);     
-    
-        if(pre_vert_angle == shmPtr->tower.veri_angle && pre_hori_angle == shmPtr->tower.hori_angle)
-        {//角度一致，更新修改结束
-            sem_wait(&shmPtr->shmSem);
-            shmPtr->tower.b_tower_running = false; 
-            sem_post(&shmPtr->shmSem);
-        }
-        usleep(5000);//ms延时
+
+        sem_wait(&shmPtr->shmSem);
+        shmPtr->tower.b_tower_running = false; 
+        sem_post(&shmPtr->shmSem);
     }   
     close(fd);
     shmdt(shmPtr);//解除映射关系;

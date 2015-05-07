@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
     }
    
 	int numBufs;//在for循环中计数变量
-	printf("USB Camera Test\n");
 
 	int videoFd = open("/dev/video2", O_RDWR, 0);			//打开摄像头设备，使用阻塞方式打开
 	if (videoFd<0)

@@ -25,19 +25,33 @@
 
 #define PRESCALER (33-1)
 
-#define REFLASH_TIME_MS 200 
+#define REFLASH_TIME_MS 100 
 #define S3C6410_TCFG1_MUX_DIV2 (1<<4)
 #define S3C6410_TCFG1_MUX1_MASK (15<<4)
 
 #define S_HORIZON 1
 #define S_VERTICAL 0
 
+#define HORI_MAX_VALUE 2528
+#define HORI_MIN_VALUE 487
+
+#define VERT_MAX_VALUE 2558
+#define VERT_MIN_VALUE 596 
+
+#define ACCELERATION 30
+
+//求绝对值的宏函数
+#define ABS(x,y) ( ((x)>(y))? (x)-(y) : (y)-(x) )
+
 struct towerDever
 {
     struct miscdevice towerMiscdevi;
  
-    unsigned long horizonAngle;
-    unsigned long verticalAngle;
+    unsigned long targetHoriAngle;
+    unsigned long targetVertAngle;
+
+    unsigned long currentHoriAngle;
+    unsigned long currentVertAngle;
 
     struct timer_list tower_timer;//定时中断用到的定时器
 }towerDev;
@@ -149,7 +163,7 @@ static void s3c6410_set_timer1(unsigned long Val)
 
 void time_list_handle(unsigned long none)
 {
-    unsigned int choice = S_HORIZON;
+//    unsigned int choice = S_HORIZON;
     unsigned long gpio_data;
 
 	tower_stop();
@@ -158,22 +172,47 @@ void time_list_handle(unsigned long none)
     //在中断中调用下面给GPIO提供的库函数发生BUG: scheduling while atomic
 //    choice = (~s3c_gpio_getpin(S3C64XX_GPL(0)))&0x01;//通道切换,把高位掩掉
 //    s3c_gpio_setpin(S3C64XX_GPL(0), choice);
-    
+
+    if(ABS(towerDev.currentHoriAngle, towerDev.targetHoriAngle) < ACCELERATION)
+    {//当前角度与目标角度之差不大于加速度
+        towerDev.currentHoriAngle = towerDev.targetHoriAngle;
+    }
+    else if(towerDev.currentHoriAngle > towerDev.targetHoriAngle )
+    {//当前角度比目标角度大，继续减速
+        towerDev.currentHoriAngle -= ACCELERATION;
+    }
+    else
+    {//当前角度比目标角度小，继续加速
+        towerDev.currentHoriAngle += ACCELERATION; 
+    }
+
+    if(ABS(towerDev.currentVertAngle, towerDev.targetVertAngle) < ACCELERATION)
+    {//当前角度与目标角度之差不大于加速度
+        towerDev.currentVertAngle = towerDev.targetVertAngle;
+    }
+    else if(towerDev.currentVertAngle > towerDev.targetVertAngle )
+    {//当前角度比目标角度大，继续减速
+        towerDev.currentVertAngle -= ACCELERATION;
+    }
+    else
+    {//当前角度比目标角度小，继续加速
+        towerDev.currentVertAngle += ACCELERATION; 
+    }
+
     gpio_data = __raw_readl(S3C64XX_GPLDAT);
 
     if(gpio_data&0x01)
     {
 	    __raw_writel(gpio_data&(~0x01), S3C64XX_GPLDAT);//通道切换
-        s3c6410_set_timer1(towerDev.verticalAngle);
+        s3c6410_set_timer1(towerDev.currentVertAngle);
     }
     else
     {
 	    __raw_writel(gpio_data | 0x01, S3C64XX_GPLDAT);//通道切换
-        s3c6410_set_timer1(towerDev.horizonAngle);
+        s3c6410_set_timer1(towerDev.currentHoriAngle);
     }
 
     mod_timer(&towerDev.tower_timer, jiffies + msecs_to_jiffies(REFLASH_TIME_MS));//设定新的值继续加入定时器列表
-
 }
 
 #define HORIZON (0x1<<31)
@@ -200,11 +239,11 @@ static long tower_ioctl(
     {
        
         case HORIZON_SET:
-            towerDev.horizonAngle = Val;
+            towerDev.targetHoriAngle = Val;
             break;
 
         case VERTIAL_SET:
-            towerDev.verticalAngle = Val;
+            towerDev.targetVertAngle = Val;
             break;
 
         case VERTIAL_OFF://对于停止，水平和竖直不做区分
@@ -228,12 +267,12 @@ ssize_t tower_read(struct file* file, char __user* buf, size_t count,  loff_t* l
 
     if(count == S_HORIZON)
     {
-        put_user( towerDev.horizonAngle, (unsigned long*)buf );
+        put_user( towerDev.currentHoriAngle, (unsigned long*)buf );
         return 4;
     }
     else if(count == S_VERTICAL)
     {
-        put_user( towerDev.verticalAngle, (unsigned long*)buf );
+        put_user( towerDev.currentVertAngle, (unsigned long*)buf );
         return 4;
     }
     else 
@@ -243,6 +282,12 @@ ssize_t tower_read(struct file* file, char __user* buf, size_t count,  loff_t* l
 //when open beep device, this function will be called
 static int tower_open(struct inode *inode, struct file *file)
 {
+    
+    towerDev.targetHoriAngle = (HORI_MAX_VALUE+HORI_MIN_VALUE)/2;
+    towerDev.targetVertAngle = (HORI_MAX_VALUE+HORI_MIN_VALUE)/2;
+    towerDev.currentHoriAngle= (VERT_MAX_VALUE+VERT_MIN_VALUE)/2;
+    towerDev.currentVertAngle= (VERT_MAX_VALUE+VERT_MIN_VALUE)/2;
+    
     //进行中断定时器初始化
     init_timer(&towerDev.tower_timer);
     towerDev.tower_timer.function = time_list_handle;
@@ -280,8 +325,10 @@ static int tower_init(void)
     towerDev.towerMiscdevi.minor = MISC_DYNAMIC_MINOR;
     towerDev.towerMiscdevi.name	= DEVICE_NAME;
     towerDev.towerMiscdevi.fops	= &tower_fops;
-    towerDev.horizonAngle = 0;
-    towerDev.verticalAngle = 0;
+    towerDev.targetHoriAngle = 0;
+    towerDev.targetVertAngle = 0;
+    towerDev.currentHoriAngle= 0;
+    towerDev.currentVertAngle= 0;
 
 	ret = misc_register(&towerDev.towerMiscdevi);
 
