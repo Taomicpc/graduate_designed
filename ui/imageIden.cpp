@@ -224,7 +224,7 @@ ImageIden::ImageIden(QWidget *parent):
     //连接输入法无效
 	connect(openFile, SIGNAL(currentChanged(const QString)), this, SLOT(disvisiableInput()));	
 	connect(openFile, SIGNAL(fileSelected(const QString &)), this, SLOT(displayImage(const QString &)));	
-	connect(openFile, SIGNAL(directoryEntered(const QString)), this, SLOT(disvisiableInput()));	
+	//connect(openFile, SIGNAL(directoryEntered(const QString)), this, SLOT(disvisiableInput()));	
 
 //定时器初始化    
     timer1->setSingleShot(false); //多次触发
