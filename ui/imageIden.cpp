@@ -165,7 +165,7 @@ ImageIden::ImageIden(QWidget *parent):
 	QMainWindow(parent),
 	ui(new Ui::ImageIden), //Ui namespace ,not this 
 	im(new TQInputMethod),
-	openFile(new QFileDialog),
+	//openFile(new QFileDialog),
 	m_getImg(new QImage), timer1(new QTimer), timer2(new QTimer)
 {
 	ui->setupUi(this);
@@ -222,9 +222,9 @@ ImageIden::ImageIden(QWidget *parent):
 	connect(timer1, SIGNAL(timeout()), this, SLOT(doWhenTimeout1()));
 	
     //连接输入法无效
-	connect(openFile, SIGNAL(currentChanged(const QString)), this, SLOT(disvisiableInput()));	
-	connect(openFile, SIGNAL(fileSelected(const QString &)), this, SLOT(displayImage(const QString &)));	
-	connect(openFile, SIGNAL(directoryEntered(const QString)), this, SLOT(disvisiableInput()));	
+//	connect(openFile, SIGNAL(currentChanged(const QString)), this, SLOT(disvisiableInput()));	
+//	connect(openFile, SIGNAL(fileSelected(const QString &)), this, SLOT(displayImage(const QString &)));	
+//	connect(openFile, SIGNAL(directoryEntered(const QString)), this, SLOT(disvisiableInput()));	
 
 //定时器初始化    
     timer1->setSingleShot(false); //多次触发
@@ -233,9 +233,9 @@ ImageIden::ImageIden(QWidget *parent):
 
 
 //目录窗口初始化
-    openFile->setDirectory("/opt/designed/image/");
-    openFile->setFilter(tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-    openFile->setVisible(false);
+//    openFile->setDirectory("/opt/designed/image/");
+//    openFile->setFilter(tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+//    openFile->setVisible(false);
 
 	//设置背景图
 	QRect screen_size = QApplication::desktop()->screenGeometry(); //get window size
@@ -282,21 +282,50 @@ ImageIden::~ImageIden()
 	delete ui;
 	delete im;
 	delete m_getImg;
-	delete openFile;
+//	delete openFile;
 	delete timer1;
 	delete timer2;
 }
+//
+//void ImageIden::loadPicture()
+//{
+////    openFile=new QFileDialog(this, "choice image", "/opt/designed/image/", tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+//
+////    openFile->setDirectory();
+////    openFile->setFilter();
+////    openFile->setVisible(false);
+//
+//    openFile->setVisible(true);  
+//}
+//
 
 void ImageIden::loadPicture()
 {
-//    openFile=new QFileDialog(this, "choice image", "/opt/designed/image/", tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+	QString fileName;
 
-//    openFile->setDirectory();
-//    openFile->setFilter();
-//    openFile->setVisible(false);
+	fileName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+	if (fileName.isEmpty())
+		return;
+	else
+	{
+		if ( !( m_getImg->load(fileName) ) )
+		{
+			QMessageBox::information(this,
+					tr("Open img error"),
+					tr("Open img error!"));
+			return;
+		}
+		
+        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+        if (timer1->isActive())
+			timer1->stop();
 
-    openFile->setVisible(true);  
+        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+	}
 }
+
 
 void ImageIden::buttonQuit()
 {
@@ -512,10 +541,10 @@ void ImageIden::btPhotoPushed()
     else
         system("cp -f /opt/designed/image/src_image.jpg /opt/designed/image/photo.jpg");
 
-    displayImage("/opt/designed/image/photo.jpg");
-//	m_getImg->load("/opt/designed/image/photo.jpg");
-//    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
-//	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+//    displayImage("/opt/designed/image/photo.jpg");
+	m_getImg->load("/opt/designed/image/photo.jpg");
+    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
 
 void ImageIden::btPrePicPushed()
@@ -537,8 +566,31 @@ void ImageIden::btNextPicPushed()
 {
 	cout << "Open dir" << endl;
 
+    QString fileName;
+
+	fileName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+	if (fileName.isEmpty())
+		return;
+	else
+	{
+		if ( !( m_getImg->load(fileName) ) )
+		{
+			QMessageBox::information(this,
+					tr("Open img error"),
+					tr("Open img error!"));
+			return;
+		}
+		
+        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+        if (timer1->isActive())
+			timer1->stop();
+
+        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+	}
     //openFile=new QFileDialog(this, "choice image", "/opt/designed/image/", tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-    openFile->setVisible(true);  
+//    openFile->setVisible(true);  
 }
 
 void ImageIden::displayImage(const QString & fileName)

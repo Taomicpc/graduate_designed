@@ -1,4 +1,22 @@
 #设置添加git忽略的文件
 
 *.[oa]
+public_lib/
+public_src/
+task/deal
+task/demoMakefile
+task/exemain
+task/exetest
+task/filelist
+task/input
+task/shm
+task/test.c
+task/tower
+task/wtofile
+task/wtolcd
+tower_Modules/
+ui/.imageIden.cpp.swp
+ui/moc_TQInputMethod.cpp
+ui/moc_imageIden.cpp
+ui/useByTaoImageIden
 
