@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	QTextCodec::setCodecForCStrings(codec);
 	QTextCodec::setCodecForTr(codec);	
 
-	app.setFont(QFont("wqy-microhei"));
+	//app.setFont(QFont("wqy-microhei"));
 	ImageIden ii;
 	ii.show();
 	return app.exec();

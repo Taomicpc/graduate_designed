@@ -11,6 +11,8 @@
 #include "ui_imageIden.h"
 #include "TQInputMethod.h"
 #include <QWSInputMethod>
+#include <QFileDialog>
+
 extern "C"
 {
     #include "public.h"
@@ -26,12 +28,13 @@ public :
 public slots :
 	void loadPicture();
 	void buttonQuit();
+	void buttonReboot();
 	
 	void btUpPushed();
 	void btDownPushed();
 	void btLeftPushed();
 	void btRightPushed();
-    void startPushPoll();
+    void startPushPoll();//长按的开始和结束槽函数
     void stopPushPoll();
 
 	void btSavePushed();
@@ -39,6 +42,7 @@ public slots :
 	void btPrePicPushed();
 	void btNextPicPushed();
     void enableSaveButton(int value);
+    void disvisiableInput();
 
     void horiSBoxInput();
     void vertSBoxInput();
@@ -46,7 +50,8 @@ public slots :
     //用
     void horiAngleSet(int);
     void vertAngleSet(int);
-	
+
+	void displayImage(const QString &);
 	void setRefrashImage(bool checked);  
 	void setGrayImage(bool checked);  
 
@@ -62,6 +67,7 @@ signals :
 private:
 	Ui::ImageIden *ui;
 	QWSInputMethod *im;	
+	QFileDialog *openFile;  //choice file
 	QImage *m_getImg;  //load picture from file
 	QTimer *timer1;
 	QTimer *timer2;//定时器2动态挂载函数任务，主要用于定时轮询各种状态
