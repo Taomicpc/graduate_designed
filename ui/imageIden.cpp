@@ -16,6 +16,7 @@
 #include <iostream>
 #include "imageIden.h"
 
+
 #define CHANGE_STEP 2//按键改变舵机角度的步长
 int IshmId;
 shmType* shmPtr = NULL;//设置共享内存的全局变量指针
@@ -256,11 +257,16 @@ ImageIden::ImageIden(QWidget *parent):
     ui->horiCtlDial->setRange(0, 180);//设置角度有效值在０～１８０
     ui->vertCtlSlider->setRange(0, 180);//设置角度有效值在０～１８０
 	
-//初始化显示框    
+//初始化主显示框    
     loadPicName = "/opt/designed/image/src_image.jpg";
 	m_getImg->load(loadPicName);
-	*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+	*m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+
+//初始化数字识别显示框
+	m_getImg->load("/opt/designed/image/numberDetect.bmp");
+	*m_getImg = m_getImg->scaled(ui->numberImage->size(), Qt::IgnoreAspectRatio); //photo size
+	ui->numberImage->setPixmap(QPixmap::fromImage(*m_getImg));
 
     setWindowState(Qt::WindowFullScreen);//窗口最大化
 }
@@ -279,7 +285,7 @@ ImageIden::~ImageIden()
 
 void ImageIden::loadPicture()
 {
-	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "/opt/designed/image/",
 					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
 	if (loadPicName.isEmpty())
 		return;
@@ -297,7 +303,7 @@ void ImageIden::loadPicture()
         if (timer1->isActive())
 			timer1->stop();
 
-        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+        *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
 }
@@ -511,7 +517,7 @@ void ImageIden::btPhotoPushed()
 
 	loadPicName = "/opt/designed/image/photo.jpg";
     m_getImg->load(loadPicName);
-    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+    *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
 
@@ -534,7 +540,7 @@ void ImageIden::btNextPicPushed()
 {
 	cout << "Open dir" << endl;
 
-    loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+    loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "/opt/designed/image/",
 					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
 	if (loadPicName.isEmpty())
 		return;
@@ -552,7 +558,7 @@ void ImageIden::btNextPicPushed()
         if (timer1->isActive())
 			timer1->stop();
 
-        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+        *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
 //    QString fileName;
@@ -598,7 +604,7 @@ void ImageIden::displayImage(const QString & fileName)
         if (timer1->isActive())
 			timer1->stop();
 
-        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+        *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
 }
@@ -659,7 +665,7 @@ void ImageIden::doWhenTimeout1()
 	    //m_getImg->load("/opt/designed/image/src_image.jpg");
         
     m_getImg->load(loadPicName);
-    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+    *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
 
@@ -689,7 +695,7 @@ void ImageIden::faceLoadPushed()
 {
 //	QString fileName;
 
-	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "/opt/designed/image/",
 					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
 	if (loadPicName.isEmpty())
 		return;
@@ -707,7 +713,7 @@ void ImageIden::faceLoadPushed()
         if (timer1->isActive())
 			timer1->stop();
 
-        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+        *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
 }
@@ -715,21 +721,23 @@ void ImageIden::faceLoadPushed()
 void ImageIden::faceDetectPushed()
 {
     char *commen_ptr=NULL;
-
+    
     ui->faceDetectBt->setEnabled(false);
 
     commen_ptr = (char *)malloc(strlen(qPrintable(loadPicName)) + strlen("/opt/designed/facedetect ") + 1);
 
     strcpy(commen_ptr, "/opt/designed/facedetect ");
     strcat(commen_ptr, qPrintable(loadPicName));
+    printf("%s\n", commen_ptr);
 
+//system调用方法，但实际也是fork
     system(commen_ptr);//运行单帧人脸检测，检测结果存放在facedetect.jpg图像中
 
     free(commen_ptr);
     commen_ptr = NULL;
     
     m_getImg->load("/opt/designed/image/facedetect.jpg");
-    *m_getImg = m_getImg->scaled(QSize(330,290), Qt::IgnoreAspectRatio); //photo size
+    *m_getImg = m_getImg->scaled(ui->faceDetectImage->size(), Qt::IgnoreAspectRatio); //photo size
 	ui->faceDetectImage->setPixmap(QPixmap::fromImage(*m_getImg));
     
     ui->faceDetectBt->setEnabled(true);

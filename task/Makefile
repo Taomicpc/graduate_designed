@@ -19,8 +19,8 @@ wtofile:wtofile.c public.c
 wtolcd:wtolcd.c public.c
 	$(CROSS)gcc -o wtolcd wtolcd.c public.c -ljpeg -lpthread  $(INCPATH) $(SRC)
 
-deal:deal.c public.c
-	$(CROSS)gcc -o deal deal.c public.c -ljpeg -lpthread  $(INCPATH) $(SRC)
+deal:deal.cpp 
+	$(CROSS)g++ `pkg-config --cflags opencv` -o deal deal.cpp -lpthread -lrt -ldl `pkg-config --libs opencv` $(INCPATH) $(SRC)
 
 facedetect:facedetect.cpp 
 	$(CROSS)g++ `pkg-config --cflags opencv` -o facedetect facedetect.cpp -lpthread -lrt -ldl `pkg-config --libs opencv`

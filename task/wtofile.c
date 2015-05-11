@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
             sprintf(filename, "%s%d_%d_%d.jpg", shmPtr->wtofile.name, count, shmPtr->tower.hori_angle, shmPtr->tower.veri_angle);
             //printf("writing %s from 0x%x,jpg size:%d\n", filename, shmPtr->videoBuf[0].picStart,shmPtr->videoBuf[0].imageSize);
             char command[100];
-            sprintf(command, "cp -f /opt/designed/image/src_image.jpg /opt/designed/image/%s", filename);
+            sprintf(command, "cp -f /opt/designed/image/src_image.jpg /opt/designed/image/save/%s", filename);
             printf("prepera to save %s\n",filename);
     
             if(fork() == 0)

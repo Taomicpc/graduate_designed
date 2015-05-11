@@ -1,3 +1,12 @@
+//将图片数据处理完以后,压缩成jpeg图像
+//做灰度预处理。
+extern "C"
+{
+    #include "public.h"
+    #include <jpeglib.h>
+    #include <jerror.h>
+}
+
 #include "opencv2/objdetect.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/videoio.hpp"
@@ -21,33 +30,91 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
                     CascadeClassifier& nestedCascade,
                     double scale, bool tryflip );
 
+
 int main(int argc, char* argv[])
 {
+//共享内存变量定义
+    int IshmId;
+    key_t ipcKey;
+    shmType* shmPtr = NULL;
+
+//人脸识别变量定义
     CascadeClassifier cascade, nestedCascade;
     double scale = 1;
     bool tryflip = false;
     Mat image;
-    
-    image=imread(argv[1],1);
-    if(image.empty())
+
+//连接到共享内存    
+    ipcKey = ftok("/opt/designed/shm", 'a');
+    if(ipcKey == -1)
+        perror("ftok error");
+
+    IshmId = shmget(ipcKey, sizeof(shmType),S_IRUSR | S_IWUSR | IPC_CREAT | 0777);//0666是ubuntu下此操作需要的校验
+
+    if(IshmId == -1)
     {
-        cout<<"Couldn't read face source image"<<endl;
+        perror("shmget error");
         return 1;
     }
- 
-    if( !cascade.load( cascadeName ) )
-    {
-        cerr << "ERROR: Could not load classifier cascade" << endl;
-        return -1;
-    }
+
+    shmPtr = (shmType *)shmat(IshmId, NULL, 0);
    
-    detectAndDraw( image, cascade, nestedCascade, scale, tryflip );
+    if(shmPtr == (void *)-1)
+    {
+        perror("deal.c shmat error");
+        return 1;
+    } 
+
+    printf("deal process standby!\n");
+
+    while(1)
+    {
+        if(shmPtr->deal.b_deal_running == false)
+        {
+            printf("deal process Sleep!\n");
+            sem_wait(&shmPtr->deal.sem_deal_wakeup);//睡眠等待控制台允许
+            printf("deal process Wakeup!\n");
+        }
+        
+        //sem_wait(&shmPtr->shmSem);
+        if(shmPtr->b_endflag == true)
+        {//主程序改变标志位，需要退出
+            //sem_post(&shmPtr->shmSem);
+            break;
+        }
+       
+        sem_wait(&shmPtr->deal.sem_deal_standby);//等待获得写入lcd的信号量
+    
+        image=imread("/opt/designed/image/src_image.jpg",1);
+        if(image.empty())
+        {
+            cout<<"Couldn't read face source image"<<endl;
+            return 1;
+        }
  
-    cout<<"Finish facedetect"<<endl;
+        if( !cascade.load( cascadeName ) )
+        {
+            cerr << "ERROR: Could not load classifier cascade" << endl;
+            return -1;
+        }
+   
+        detectAndDraw( image, cascade, nestedCascade, scale, tryflip );
+ 
+        cout<<"Finish facedetect"<<endl;
+
+        sem_wait(&shmPtr->shmSem);
+       // printf("finish deal\n");
+        shmPtr->deal.b_finish_deal = true;
+        //if(shmPtr->deal.b_need_to_show)
+        //    sem_post(&shmPtr->deal.sem_deal_finish);
+        sem_post(&shmPtr->shmSem);
+    }
+    
+    shmdt(shmPtr);//解除映射关系;
+    printf("deal process exit!\n");
 
     return 0;
 }
-
 
 
 void detectAndDraw( Mat& img, CascadeClassifier& cascade,
@@ -141,6 +208,6 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade,
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(95);
 
-    imwrite("/opt/designed/image/facedetect.jpg", img, compression_params);
+    imwrite("/opt/designed/image/deal_image.jpg", img, compression_params);
     //cv::imshow( "result", img );
 }

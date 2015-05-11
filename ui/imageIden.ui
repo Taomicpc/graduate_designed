@@ -54,9 +54,9 @@
     <property name="geometry">
      <rect>
       <x>29</x>
-      <y>90</y>
+      <y>95</y>
       <width>261</width>
-      <height>286</height>
+      <height>281</height>
      </rect>
     </property>
     <property name="font">
@@ -190,7 +190,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="photoInput">
      <attribute name="title">
@@ -582,7 +582,7 @@
     </widget>
     <widget class="QWidget" name="photoDeal">
      <attribute name="title">
-      <string>人脸识别</string>
+      <string>人脸检测</string>
      </attribute>
      <widget class="QLabel" name="faceDetectImage">
       <property name="geometry">
@@ -620,7 +620,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>人脸识别</string>
+       <string>人脸检测</string>
       </property>
      </widget>
     </widget>
@@ -628,6 +628,19 @@
      <attribute name="title">
       <string>数字识别</string>
      </attribute>
+     <widget class="QLabel" name="numberImage">
+      <property name="geometry">
+       <rect>
+        <x>165</x>
+        <y>35</y>
+        <width>286</width>
+        <height>221</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QPushButton" name="rebootButton">

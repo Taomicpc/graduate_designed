@@ -74,7 +74,6 @@ private:
 	QTimer *timer2;//定时器2动态挂载函数任务，主要用于定时轮询各种状态
 	int m_timeoutCount;
     QString loadPicName;//记录labelPicture加载的图片名字
-
 };
 
 #endif 

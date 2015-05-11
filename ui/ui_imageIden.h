@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'imageIden.ui'
 **
-** Created: Mon May 11 12:58:45 2015
+** Created: Mon May 11 22:30:18 2015
 **      by: Qt User Interface Compiler version 4.5.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -86,6 +86,7 @@ public:
     QPushButton *faceDetectLoadBt;
     QPushButton *faceDetectBt;
     QWidget *tab;
+    QLabel *numberImage;
     QPushButton *rebootButton;
     QMenuBar *menubar;
     QMenu *menuFile;
@@ -151,7 +152,7 @@ public:
         buttonQuit->setFont(font3);
         labelPicture = new QLabel(centralwidget);
         labelPicture->setObjectName(QString::fromUtf8("labelPicture"));
-        labelPicture->setGeometry(QRect(29, 90, 261, 286));
+        labelPicture->setGeometry(QRect(29, 95, 261, 281));
         QFont font4;
         font4.setFamily(QString::fromUtf8("WenQuanYi Micro Hei"));
         font4.setBold(false);
@@ -325,6 +326,9 @@ public:
         ctlTab->addTab(photoDeal, QString());
         tab = new QWidget();
         tab->setObjectName(QString::fromUtf8("tab"));
+        numberImage = new QLabel(tab);
+        numberImage->setObjectName(QString::fromUtf8("numberImage"));
+        numberImage->setGeometry(QRect(165, 35, 286, 221));
         ctlTab->addTab(tab, QString());
         rebootButton = new QPushButton(centralwidget);
         rebootButton->setObjectName(QString::fromUtf8("rebootButton"));
@@ -380,7 +384,7 @@ public:
 
         retranslateUi(ImageIden);
 
-        ctlTab->setCurrentIndex(0);
+        ctlTab->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(ImageIden);
@@ -424,8 +428,9 @@ public:
         ctlTab->setTabText(ctlTab->indexOf(photoInput), QApplication::translate("ImageIden", "\345\233\276\345\203\217\351\207\207\351\233\206", 0, QApplication::UnicodeUTF8));
         faceDetectImage->setText(QString());
         faceDetectLoadBt->setText(QApplication::translate("ImageIden", "\345\233\276\347\211\207\345\212\240\350\275\275", 0, QApplication::UnicodeUTF8));
-        faceDetectBt->setText(QApplication::translate("ImageIden", "\344\272\272\350\204\270\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
-        ctlTab->setTabText(ctlTab->indexOf(photoDeal), QApplication::translate("ImageIden", "\344\272\272\350\204\270\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
+        faceDetectBt->setText(QApplication::translate("ImageIden", "\344\272\272\350\204\270\346\243\200\346\265\213", 0, QApplication::UnicodeUTF8));
+        ctlTab->setTabText(ctlTab->indexOf(photoDeal), QApplication::translate("ImageIden", "\344\272\272\350\204\270\346\243\200\346\265\213", 0, QApplication::UnicodeUTF8));
+        numberImage->setText(QString());
         ctlTab->setTabText(ctlTab->indexOf(tab), QApplication::translate("ImageIden", "\346\225\260\345\255\227\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
         rebootButton->setText(QApplication::translate("ImageIden", "\351\207\215\345\220\257", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("ImageIden", "\346\226\207\344\273\266", 0, QApplication::UnicodeUTF8));
