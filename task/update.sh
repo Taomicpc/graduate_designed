@@ -14,6 +14,6 @@ fi
 cd /home/tao/program_practice/graduate_designed/task/
 make
 
-sudo cp -f exemain input wtofile wtolcd deal tower /srv/nfs/
+sudo cp -f exemain input wtofile wtolcd deal tower facedetect /srv/nfs/
 sudo cp -f /home/tao/work/linux-3.0-rc6-Old/drivers/char/taoTower.ko /srv/nfs/
 

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'imageIden.ui'
 **
-** Created: Thu May 7 12:47:02 2015
+** Created: Mon May 11 12:58:45 2015
 **      by: Qt User Interface Compiler version 4.5.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -82,7 +82,10 @@ public:
     QSpinBox *numberSBox;
     QSpinBox *delaySBox;
     QWidget *photoDeal;
-    QLabel *dealImage;
+    QLabel *faceDetectImage;
+    QPushButton *faceDetectLoadBt;
+    QPushButton *faceDetectBt;
+    QWidget *tab;
     QPushButton *rebootButton;
     QMenuBar *menubar;
     QMenu *menuFile;
@@ -148,7 +151,7 @@ public:
         buttonQuit->setFont(font3);
         labelPicture = new QLabel(centralwidget);
         labelPicture->setObjectName(QString::fromUtf8("labelPicture"));
-        labelPicture->setGeometry(QRect(29, 50, 241, 341));
+        labelPicture->setGeometry(QRect(29, 90, 261, 286));
         QFont font4;
         font4.setFamily(QString::fromUtf8("WenQuanYi Micro Hei"));
         font4.setBold(false);
@@ -178,7 +181,7 @@ public:
 
         saveProgressBar = new QProgressBar(centralwidget);
         saveProgressBar->setObjectName(QString::fromUtf8("saveProgressBar"));
-        saveProgressBar->setGeometry(QRect(335, 395, 221, 31));
+        saveProgressBar->setGeometry(QRect(330, 395, 221, 31));
         saveProgressBar->setValue(24);
         saveProgressBar->setTextVisible(true);
         btPrePic = new QPushButton(centralwidget);
@@ -310,10 +313,19 @@ public:
         ctlTab->addTab(photoInput, QString());
         photoDeal = new QWidget();
         photoDeal->setObjectName(QString::fromUtf8("photoDeal"));
-        dealImage = new QLabel(photoDeal);
-        dealImage->setObjectName(QString::fromUtf8("dealImage"));
-        dealImage->setGeometry(QRect(35, 20, 411, 261));
+        faceDetectImage = new QLabel(photoDeal);
+        faceDetectImage->setObjectName(QString::fromUtf8("faceDetectImage"));
+        faceDetectImage->setGeometry(QRect(180, 15, 261, 271));
+        faceDetectLoadBt = new QPushButton(photoDeal);
+        faceDetectLoadBt->setObjectName(QString::fromUtf8("faceDetectLoadBt"));
+        faceDetectLoadBt->setGeometry(QRect(25, 70, 111, 41));
+        faceDetectBt = new QPushButton(photoDeal);
+        faceDetectBt->setObjectName(QString::fromUtf8("faceDetectBt"));
+        faceDetectBt->setGeometry(QRect(25, 180, 111, 41));
         ctlTab->addTab(photoDeal, QString());
+        tab = new QWidget();
+        tab->setObjectName(QString::fromUtf8("tab"));
+        ctlTab->addTab(tab, QString());
         rebootButton = new QPushButton(centralwidget);
         rebootButton->setObjectName(QString::fromUtf8("rebootButton"));
         rebootButton->setGeometry(QRect(630, 400, 71, 31));
@@ -410,8 +422,11 @@ public:
         btSave->setText(QApplication::translate("ImageIden", "\350\277\236\346\213\215", 0, QApplication::UnicodeUTF8));
         btPhoto->setText(QApplication::translate("ImageIden", "\346\212\223\346\213\215", 0, QApplication::UnicodeUTF8));
         ctlTab->setTabText(ctlTab->indexOf(photoInput), QApplication::translate("ImageIden", "\345\233\276\345\203\217\351\207\207\351\233\206", 0, QApplication::UnicodeUTF8));
-        dealImage->setText(QString());
-        ctlTab->setTabText(ctlTab->indexOf(photoDeal), QApplication::translate("ImageIden", "\345\233\276\345\203\217\345\244\204\347\220\206", 0, QApplication::UnicodeUTF8));
+        faceDetectImage->setText(QString());
+        faceDetectLoadBt->setText(QApplication::translate("ImageIden", "\345\233\276\347\211\207\345\212\240\350\275\275", 0, QApplication::UnicodeUTF8));
+        faceDetectBt->setText(QApplication::translate("ImageIden", "\344\272\272\350\204\270\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
+        ctlTab->setTabText(ctlTab->indexOf(photoDeal), QApplication::translate("ImageIden", "\344\272\272\350\204\270\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
+        ctlTab->setTabText(ctlTab->indexOf(tab), QApplication::translate("ImageIden", "\346\225\260\345\255\227\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
         rebootButton->setText(QApplication::translate("ImageIden", "\351\207\215\345\220\257", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("ImageIden", "\346\226\207\344\273\266", 0, QApplication::UnicodeUTF8));
     } // retranslateUi

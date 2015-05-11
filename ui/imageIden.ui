@@ -54,9 +54,9 @@
     <property name="geometry">
      <rect>
       <x>29</x>
-      <y>50</y>
-      <width>241</width>
-      <height>341</height>
+      <y>90</y>
+      <width>261</width>
+      <height>286</height>
      </rect>
     </property>
     <property name="font">
@@ -114,7 +114,7 @@
    <widget class="QProgressBar" name="saveProgressBar">
     <property name="geometry">
      <rect>
-      <x>335</x>
+      <x>330</x>
       <y>395</y>
       <width>221</width>
       <height>31</height>
@@ -582,21 +582,52 @@
     </widget>
     <widget class="QWidget" name="photoDeal">
      <attribute name="title">
-      <string>图像处理</string>
+      <string>人脸识别</string>
      </attribute>
-     <widget class="QLabel" name="dealImage">
+     <widget class="QLabel" name="faceDetectImage">
       <property name="geometry">
        <rect>
-        <x>35</x>
-        <y>20</y>
-        <width>411</width>
-        <height>261</height>
+        <x>180</x>
+        <y>15</y>
+        <width>261</width>
+        <height>271</height>
        </rect>
       </property>
       <property name="text">
        <string/>
       </property>
      </widget>
+     <widget class="QPushButton" name="faceDetectLoadBt">
+      <property name="geometry">
+       <rect>
+        <x>25</x>
+        <y>70</y>
+        <width>111</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>图片加载</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="faceDetectBt">
+      <property name="geometry">
+       <rect>
+        <x>25</x>
+        <y>180</y>
+        <width>111</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>人脸识别</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>数字识别</string>
+     </attribute>
     </widget>
    </widget>
    <widget class="QPushButton" name="rebootButton">

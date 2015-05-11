@@ -165,7 +165,6 @@ ImageIden::ImageIden(QWidget *parent):
 	QMainWindow(parent),
 	ui(new Ui::ImageIden), //Ui namespace ,not this 
 	im(new TQInputMethod),
-	//openFile(new QFileDialog),
 	m_getImg(new QImage), timer1(new QTimer), timer2(new QTimer)
 {
 	ui->setupUi(this);
@@ -220,22 +219,13 @@ ImageIden::ImageIden(QWidget *parent):
 	connect(ui->grayBox, SIGNAL(toggled(bool)), this, SLOT(setGrayImage(bool)));	
 
 	connect(timer1, SIGNAL(timeout()), this, SLOT(doWhenTimeout1()));
-	
-    //连接输入法无效
-//	connect(openFile, SIGNAL(currentChanged(const QString)), this, SLOT(disvisiableInput()));	
-//	connect(openFile, SIGNAL(fileSelected(const QString &)), this, SLOT(displayImage(const QString &)));	
-//	connect(openFile, SIGNAL(directoryEntered(const QString)), this, SLOT(disvisiableInput()));	
-
+//人脸检测的槽函数连接
+	connect(ui->faceDetectLoadBt, SIGNAL(clicked()), this, SLOT(faceLoadPushed()));	
+	connect(ui->faceDetectBt, SIGNAL(clicked()), this, SLOT(faceDetectPushed()));	
 //定时器初始化    
     timer1->setSingleShot(false); //多次触发
 	
 	timer2->setSingleShot(false); //多次触发
-
-
-//目录窗口初始化
-//    openFile->setDirectory("/opt/designed/image/");
-//    openFile->setFilter(tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-//    openFile->setVisible(false);
 
 	//设置背景图
 	QRect screen_size = QApplication::desktop()->screenGeometry(); //get window size
@@ -267,7 +257,8 @@ ImageIden::ImageIden(QWidget *parent):
     ui->vertCtlSlider->setRange(0, 180);//设置角度有效值在０～１８０
 	
 //初始化显示框    
-	m_getImg->load("/opt/designed/image/src_image.jpg");
+    loadPicName = "/opt/designed/image/src_image.jpg";
+	m_getImg->load(loadPicName);
 	*m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 
@@ -282,34 +273,19 @@ ImageIden::~ImageIden()
 	delete ui;
 	delete im;
 	delete m_getImg;
-//	delete openFile;
 	delete timer1;
 	delete timer2;
 }
-//
-//void ImageIden::loadPicture()
-//{
-////    openFile=new QFileDialog(this, "choice image", "/opt/designed/image/", tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-//
-////    openFile->setDirectory();
-////    openFile->setFilter();
-////    openFile->setVisible(false);
-//
-//    openFile->setVisible(true);  
-//}
-//
 
 void ImageIden::loadPicture()
 {
-	QString fileName;
-
-	fileName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
 					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-	if (fileName.isEmpty())
+	if (loadPicName.isEmpty())
 		return;
 	else
 	{
-		if ( !( m_getImg->load(fileName) ) )
+		if ( !( m_getImg->load(loadPicName) ) )
 		{
 			QMessageBox::information(this,
 					tr("Open img error"),
@@ -509,7 +485,6 @@ void ImageIden::btSavePushed()
     ui->btSave->setEnabled(false);//
 
     connect(timer2, SIGNAL(timeout()), this, SLOT(saveProgressPoll()));
-//    if(!timer2->isActive())
     timer2->start(500);//启动定时器进行刷新，更新进度条	
     ui->saveProgressBar->setRange(0, ui->numberSBox->value());
     ui->saveProgressBar->setVisible(true);//设置进度条可见
@@ -518,13 +493,6 @@ void ImageIden::btSavePushed()
 void ImageIden::enableSaveButton(int value)
 {
     ui->btSave->setEnabled(value>1);//只有数量大于1才激活保存按钮
-}
-
-void ImageIden::disvisiableInput()
-{
-    cout<<"Try to disable inputmethod"<<endl;
-
-	((TQInputMethod*)im)->setVisible(false);
 }
 
 void ImageIden::btPhotoPushed()
@@ -541,8 +509,8 @@ void ImageIden::btPhotoPushed()
     else
         system("cp -f /opt/designed/image/src_image.jpg /opt/designed/image/photo.jpg");
 
-//    displayImage("/opt/designed/image/photo.jpg");
-	m_getImg->load("/opt/designed/image/photo.jpg");
+	loadPicName = "/opt/designed/image/photo.jpg";
+    m_getImg->load(loadPicName);
     *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
@@ -566,15 +534,13 @@ void ImageIden::btNextPicPushed()
 {
 	cout << "Open dir" << endl;
 
-    QString fileName;
-
-	fileName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+    loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
 					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-	if (fileName.isEmpty())
+	if (loadPicName.isEmpty())
 		return;
 	else
 	{
-		if ( !( m_getImg->load(fileName) ) )
+		if ( !( m_getImg->load(loadPicName) ) )
 		{
 			QMessageBox::information(this,
 					tr("Open img error"),
@@ -589,8 +555,29 @@ void ImageIden::btNextPicPushed()
         *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
-    //openFile=new QFileDialog(this, "choice image", "/opt/designed/image/", tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-//    openFile->setVisible(true);  
+//    QString fileName;
+//
+//	fileName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+//					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+//	if (fileName.isEmpty())
+//		return;
+//	else
+//	{
+//		if ( !( m_getImg->load(fileName) ) )
+//		{
+//			QMessageBox::information(this,
+//					tr("Open img error"),
+//					tr("Open img error!"));
+//			return;
+//		}
+//		
+//        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+//        if (timer1->isActive())
+//			timer1->stop();
+//
+//        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+//		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+//	}
 }
 
 void ImageIden::displayImage(const QString & fileName)
@@ -614,8 +601,6 @@ void ImageIden::displayImage(const QString & fileName)
         *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
-    //delete openFile;
-    //openFile->setVisible(false);
 }
 
 void ImageIden::setRefrashImage(bool checked)
@@ -664,13 +649,16 @@ void ImageIden::doWhenTimeout1()
         //sem_wait(&shmPtr->deal.sem_deal_finish);
         //忙等待会使程序卡死.
         //while(!shmPtr->deal.b_finish_deal);//忙等待一张图像处理完毕
-        m_getImg->load("/opt/designed/image/deal_image.jpg");
+        //m_getImg->load("/opt/designed/image/deal_image.jpg");
+        loadPicName = "/opt/designed/image/deal_image.jpg";
     
         //shmPtr->deal.b_need_to_show = false; 
     }
     else
-	    m_getImg->load("/opt/designed/image/src_image.jpg");
+	    loadPicName = "/opt/designed/image/src_image.jpg";
+	    //m_getImg->load("/opt/designed/image/src_image.jpg");
         
+    m_getImg->load(loadPicName);
     *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
@@ -694,3 +682,56 @@ void ImageIden::saveProgressPoll()
     }
 	//延时保存图片定时器触发
 }
+
+//------------------------------------------------------------------//
+//人脸识别部分
+void ImageIden::faceLoadPushed()
+{
+//	QString fileName;
+
+	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
+					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
+	if (loadPicName.isEmpty())
+		return;
+	else
+	{
+		if ( !( m_getImg->load(loadPicName) ) )
+		{
+			QMessageBox::information(this,
+					tr("Open img error"),
+					tr("Open img error!"));
+			return;
+		}
+		
+        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+        if (timer1->isActive())
+			timer1->stop();
+
+        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
+		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+	}
+}
+
+void ImageIden::faceDetectPushed()
+{
+    char *commen_ptr=NULL;
+
+    ui->faceDetectBt->setEnabled(false);
+
+    commen_ptr = (char *)malloc(strlen(qPrintable(loadPicName)) + strlen("/opt/designed/facedetect ") + 1);
+
+    strcpy(commen_ptr, "/opt/designed/facedetect ");
+    strcat(commen_ptr, qPrintable(loadPicName));
+
+    system(commen_ptr);//运行单帧人脸检测，检测结果存放在facedetect.jpg图像中
+
+    free(commen_ptr);
+    commen_ptr = NULL;
+    
+    m_getImg->load("/opt/designed/image/facedetect.jpg");
+    *m_getImg = m_getImg->scaled(QSize(330,290), Qt::IgnoreAspectRatio); //photo size
+	ui->faceDetectImage->setPixmap(QPixmap::fromImage(*m_getImg));
+    
+    ui->faceDetectBt->setEnabled(true);
+}
+

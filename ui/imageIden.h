@@ -42,7 +42,6 @@ public slots :
 	void btPrePicPushed();
 	void btNextPicPushed();
     void enableSaveButton(int value);
-    void disvisiableInput();
 
     void horiSBoxInput();
     void vertSBoxInput();
@@ -59,6 +58,9 @@ public slots :
 	void saveProgressPoll(); //progress poll
 	void longPushPoll(); //progress poll
 
+    void faceLoadPushed();
+    void faceDetectPushed();
+
 signals :
 	void horiAngleChange(int);
     void vertAngleChange(int);
@@ -67,11 +69,11 @@ signals :
 private:
 	Ui::ImageIden *ui;
 	QWSInputMethod *im;	
-	QFileDialog *openFile;  //choice file
 	QImage *m_getImg;  //load picture from file
 	QTimer *timer1;
 	QTimer *timer2;//定时器2动态挂载函数任务，主要用于定时轮询各种状态
 	int m_timeoutCount;
+    QString loadPicName;//记录labelPicture加载的图片名字
 
 };
 

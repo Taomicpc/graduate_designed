@@ -19,4 +19,5 @@ ui/.imageIden.cpp.swp
 ui/moc_TQInputMethod.cpp
 ui/moc_imageIden.cpp
 ui/useByTaoImageIden
+task/facedetect
 
