@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading ui file 'imageIden.ui'
 **
-** Created: Mon May 11 22:30:18 2015
+** Created: Tue May 12 17:52:30 2015
 **      by: Qt User Interface Compiler version 4.5.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling ui file!
@@ -57,7 +57,7 @@ public:
     QProgressBar *saveProgressBar;
     QPushButton *btPrePic;
     QPushButton *btNextPic;
-    QLabel *label_7;
+    QLabel *titleLabel;
     QTabWidget *ctlTab;
     QWidget *photoInput;
     QGroupBox *groupBox;
@@ -87,7 +87,7 @@ public:
     QPushButton *faceDetectBt;
     QWidget *tab;
     QLabel *numberImage;
-    QPushButton *rebootButton;
+    QLabel *displayNameLb;
     QMenuBar *menubar;
     QMenu *menuFile;
 
@@ -144,7 +144,7 @@ public:
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         buttonQuit = new QPushButton(centralwidget);
         buttonQuit->setObjectName(QString::fromUtf8("buttonQuit"));
-        buttonQuit->setGeometry(QRect(710, 400, 71, 31));
+        buttonQuit->setGeometry(QRect(725, 395, 51, 46));
         QFont font3;
         font3.setFamily(QString::fromUtf8("WenQuanYi Micro Hei"));
         font3.setBold(true);
@@ -160,7 +160,7 @@ public:
         labelPicture->setFont(font4);
         layoutWidget = new QWidget(centralwidget);
         layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
-        layoutWidget->setGeometry(QRect(45, 390, 211, 29));
+        layoutWidget->setGeometry(QRect(60, 390, 211, 29));
         horizontalLayout = new QHBoxLayout(layoutWidget);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         horizontalLayout->setContentsMargins(0, 0, 0, 0);
@@ -187,19 +187,20 @@ public:
         saveProgressBar->setTextVisible(true);
         btPrePic = new QPushButton(centralwidget);
         btPrePic->setObjectName(QString::fromUtf8("btPrePic"));
-        btPrePic->setGeometry(QRect(30, 325, 121, 51));
+        btPrePic->setGeometry(QRect(30, 325, 126, 51));
         btNextPic = new QPushButton(centralwidget);
         btNextPic->setObjectName(QString::fromUtf8("btNextPic"));
-        btNextPic->setGeometry(QRect(150, 325, 121, 51));
-        label_7 = new QLabel(centralwidget);
-        label_7->setObjectName(QString::fromUtf8("label_7"));
-        label_7->setGeometry(QRect(10, 5, 431, 41));
+        btNextPic->setGeometry(QRect(160, 325, 126, 51));
+        titleLabel = new QLabel(centralwidget);
+        titleLabel->setObjectName(QString::fromUtf8("titleLabel"));
+        titleLabel->setGeometry(QRect(175, 10, 431, 41));
         QFont font6;
         font6.setFamily(QString::fromUtf8("WenQuanYi Micro Hei Mono"));
         font6.setPointSize(16);
         font6.setBold(false);
         font6.setWeight(50);
-        label_7->setFont(font6);
+        titleLabel->setFont(font6);
+        titleLabel->setWordWrap(false);
         ctlTab = new QTabWidget(centralwidget);
         ctlTab->setObjectName(QString::fromUtf8("ctlTab"));
         ctlTab->setGeometry(QRect(300, 50, 481, 341));
@@ -330,10 +331,10 @@ public:
         numberImage->setObjectName(QString::fromUtf8("numberImage"));
         numberImage->setGeometry(QRect(165, 35, 286, 221));
         ctlTab->addTab(tab, QString());
-        rebootButton = new QPushButton(centralwidget);
-        rebootButton->setObjectName(QString::fromUtf8("rebootButton"));
-        rebootButton->setGeometry(QRect(630, 400, 71, 31));
-        rebootButton->setFont(font1);
+        displayNameLb = new QLabel(centralwidget);
+        displayNameLb->setObjectName(QString::fromUtf8("displayNameLb"));
+        displayNameLb->setGeometry(QRect(60, 61, 196, 26));
+        displayNameLb->setFont(font2);
         ImageIden->setCentralWidget(centralwidget);
         menubar = new QMenuBar(ImageIden);
         menubar->setObjectName(QString::fromUtf8("menubar"));
@@ -384,7 +385,7 @@ public:
 
         retranslateUi(ImageIden);
 
-        ctlTab->setCurrentIndex(1);
+        ctlTab->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(ImageIden);
@@ -410,7 +411,7 @@ public:
         rbRefrashImg->setText(QApplication::translate("ImageIden", "\345\256\236\346\227\266\346\230\276\347\244\272", 0, QApplication::UnicodeUTF8));
         btPrePic->setText(QString());
         btNextPic->setText(QString());
-        label_7->setText(QApplication::translate("ImageIden", "\346\257\225\344\270\232\350\256\276\350\256\241--\345\233\276\345\203\217\351\207\207\351\233\206\347\263\273\347\273\237", 0, QApplication::UnicodeUTF8));
+        titleLabel->setText(QApplication::translate("ImageIden", "\346\257\225\344\270\232\350\256\276\350\256\241--\345\233\276\345\203\217\351\207\207\351\233\206\347\263\273\347\273\237", 0, QApplication::UnicodeUTF8));
         groupBox->setTitle(QApplication::translate("ImageIden", "\350\210\265\346\234\272\346\216\247\345\210\266", 0, QApplication::UnicodeUTF8));
         btUp->setText(QApplication::translate("ImageIden", "\345\211\215", 0, QApplication::UnicodeUTF8));
         btLeft->setText(QApplication::translate("ImageIden", "\345\267\246", 0, QApplication::UnicodeUTF8));
@@ -432,7 +433,7 @@ public:
         ctlTab->setTabText(ctlTab->indexOf(photoDeal), QApplication::translate("ImageIden", "\344\272\272\350\204\270\346\243\200\346\265\213", 0, QApplication::UnicodeUTF8));
         numberImage->setText(QString());
         ctlTab->setTabText(ctlTab->indexOf(tab), QApplication::translate("ImageIden", "\346\225\260\345\255\227\350\257\206\345\210\253", 0, QApplication::UnicodeUTF8));
-        rebootButton->setText(QApplication::translate("ImageIden", "\351\207\215\345\220\257", 0, QApplication::UnicodeUTF8));
+        displayNameLb->setText(QString());
         menuFile->setTitle(QApplication::translate("ImageIden", "\346\226\207\344\273\266", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 

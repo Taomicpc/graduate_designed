@@ -16,10 +16,10 @@
 #include <iostream>
 #include "imageIden.h"
 
-
 #define CHANGE_STEP 2//按键改变舵机角度的步长
 int IshmId;
 shmType* shmPtr = NULL;//设置共享内存的全局变量指针
+const QString SAVE_ROOT="/opt/designed/image/save/";
 
 //初始化全局变量shmPtr，建立本进程的内存链接，并进行初始化设置。
 //输出0为成功初始化，1、2、3分别对应获取ipc号错误,共享内存申请失败，共享内存映射失败
@@ -180,9 +180,7 @@ ImageIden::ImageIden(QWidget *parent):
 
 	//signal and slots
 	connect(ui->actionFromFile, SIGNAL(triggered()), this, SLOT(loadPicture()));
-	//connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(buttonQuit()));
 	connect(ui->buttonQuit, SIGNAL(clicked()), this, SLOT(buttonQuit()));
-	connect(ui->rebootButton, SIGNAL(clicked()), this, SLOT(buttonReboot()));
 
 	connect(ui->btUp, SIGNAL(clicked()), this, SLOT(btUpPushed()));	
 	connect(ui->btDown, SIGNAL(clicked()), this, SLOT(btDownPushed()));	
@@ -236,7 +234,15 @@ ImageIden::ImageIden(QWidget *parent):
 	palette.setBrush(backgroundRole(), QBrush(pix));
 	setPalette(palette);
 
-//按钮背景
+//退出按钮背景设置
+    ui->buttonQuit->setText("");
+    ui->buttonQuit->setFixedSize(ui->buttonQuit->size());
+    ui->buttonQuit->setIconSize(ui->buttonQuit->size());
+    pix.load("/opt/designed/image/shutdown.png", 0, Qt::AutoColor);
+    pix = pix.scaled(ui->buttonQuit->size(), Qt::IgnoreAspectRatio);
+    ui->buttonQuit->setIcon(QIcon(pix));
+
+//上下翻按钮背景
     ui->btNextPic->setFlat(true);//设置按键透明
     ui->btPrePic->setFlat(true);
 
@@ -256,9 +262,15 @@ ImageIden::ImageIden(QWidget *parent):
     ui->vertValueSBox->setRange(0, 180);//设置角度有效值在０～１８０
     ui->horiCtlDial->setRange(0, 180);//设置角度有效值在０～１８０
     ui->vertCtlSlider->setRange(0, 180);//设置角度有效值在０～１８０
-	
+
+//初始化显示图片链表
+    updateRecording();
+    ui->displayNameLb->setText("\345\210\235\345\247\213\345\233\276");//只显示图片名字
+
 //初始化主显示框    
     loadPicName = "/opt/designed/image/src_image.jpg";
+    ui->displayNameLb->setAlignment(Qt::AlignHCenter);//设置水平居中
+
 	m_getImg->load(loadPicName);
 	*m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
@@ -269,6 +281,7 @@ ImageIden::ImageIden(QWidget *parent):
 	ui->numberImage->setPixmap(QPixmap::fromImage(*m_getImg));
 
     setWindowState(Qt::WindowFullScreen);//窗口最大化
+    ui->titleLabel->setAlignment(Qt::AlignHCenter);//设置水平居中
 }
 
 ImageIden::~ImageIden()
@@ -281,6 +294,43 @@ ImageIden::~ImageIden()
 	delete m_getImg;
 	delete timer1;
 	delete timer2;
+}
+
+void ImageIden::updateRecording()
+{
+    FILE * file;
+    char name[100];
+    QString commen;
+    QString temp;
+
+    commen.sprintf("find /opt/designed/image/save/ -name '%s*' > /opt/designed/image/filelist",
+                    qPrintable(ui->leName->text()));
+
+    system(qPrintable(commen));//执行列表命令
+
+    if((file = fopen("/opt/designed/image/filelist", "rb"))==NULL)
+    {
+        printf("open filelist error!\n");
+        exit(0);
+    }
+
+    recordingSave.clear();//清空
+
+    while(fgets(name, 80, file))
+    {
+        temp=name;
+        temp=temp.trimmed();//处理"\n"
+        temp=temp.section('/',-1);//只保存名字
+        recordingSave.append(temp);
+    }
+
+    recordingSave.sort();//进行排序
+
+    showIndex = 0;
+
+    fclose(file);
+
+    system("rm /opt/designed/image/filelist");
 }
 
 void ImageIden::loadPicture()
@@ -308,36 +358,61 @@ void ImageIden::loadPicture()
 	}
 }
 
-
 void ImageIden::buttonQuit()
 {
-	emit returned();
-	close();
-}
-
-void ImageIden::buttonReboot()
-{
     switch(QMessageBox::warning(this, 
+                                "",
                                 "\350\255\246\345\221\212",//＂警告＂的编码
                                 //＂确定重启？＂的编码
-                                "\347\241\256\345\256\232\351\207\215\345\220\257\357\274\237", 
-                                QMessageBox::Ok,
-                                QMessageBox::Cancel,
-                                QMessageBox::NoButton))
+                                // "\347\241\256\345\256\232\351\207\215\345\220\257\357\274\237", 
+                                "\345\205\263\346\234\272",//关机 
+                                "\351\207\215\345\220\257",//取消 
+                                "\345\217\226\346\266\210"))//重启
     {
-        case QMessageBox::Ok:
-            system("reboot");//shell执行重启
-            break;//基本不执行到
-        case QMessageBox::Cancel:
-            printf("cancel");
-            break;
-        default:
-            break;
+        case 0:
+                cout<<"Shutdown"<<endl;
+    	        emit returned();
+	            close();            
+                break;
+        case 1:
+                cout<<"Reboot"<<endl;
+                system("reboot");//shell执行重启
+                break;
+        case 2:
+                cout<<"Cancel"<<endl;
+                break;
     }
 
     return;
 }
 
+void ImageIden::btPrePicPushed()
+{
+    showIndex = showIndex == (recordingSave.size()-1)? 0: showIndex+1;
+    
+    cout<<recordingSave.at(showIndex).toLocal8Bit().constData()<<endl;
+    ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+
+    if (timer1->isActive())
+      timer1->stop();
+
+    displayImage("/opt/designed/image/save/" + recordingSave.at(showIndex));
+}
+
+void ImageIden::btNextPicPushed()
+{
+    showIndex = showIndex == 0 ? recordingSave.size()-1: showIndex-1;
+    
+    cout<<recordingSave.at(showIndex).toLocal8Bit().constData()<<endl;
+    ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+
+    if (timer1->isActive())
+      timer1->stop();
+
+    displayImage("/opt/designed/image/save/" + recordingSave.at(showIndex));
+}
+
+///////////////////////////////Tower Ctrl/////////////////////////////////////////////////
 void ImageIden::btUpPushed()
 {
 	cout << "up" << endl;
@@ -386,7 +461,6 @@ void ImageIden::startPushPoll()
   	cout << "long push poll start" << endl;
 
     connect(timer2, SIGNAL(timeout()), this, SLOT(longPushPoll()));
- //   if(!timer2->isActive())
     timer2->start(100);//启动定时器进行按键状态轮询，时间越小，加减越快．	
 }
 
@@ -467,6 +541,12 @@ void ImageIden::vertAngleSet( int newvalue )
         return;//直接返回不作角度修改
 }
 
+///////////////////////////////Photo Save////////////////////////////////
+void ImageIden::enableSaveButton(int value)
+{
+    ui->btSave->setEnabled(value>1);//只有数量大于1才激活保存按钮
+}
+
 void ImageIden::btSavePushed()
 {
 	cout << "save" << endl;
@@ -496,11 +576,6 @@ void ImageIden::btSavePushed()
     ui->saveProgressBar->setVisible(true);//设置进度条可见
 }
 
-void ImageIden::enableSaveButton(int value)
-{
-    ui->btSave->setEnabled(value>1);//只有数量大于1才激活保存按钮
-}
-
 void ImageIden::btPhotoPushed()
 {
 	cout << "Photo" << endl;
@@ -515,77 +590,35 @@ void ImageIden::btPhotoPushed()
     else
         system("cp -f /opt/designed/image/src_image.jpg /opt/designed/image/photo.jpg");
 
-	loadPicName = "/opt/designed/image/photo.jpg";
-    m_getImg->load(loadPicName);
-    *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
-	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
+    displayImage("/opt/designed/image/photo.jpg");//成员函数调用
+
+    ui->displayNameLb->setText("\346\213\215\347\205\247");//“拍照”
 }
 
-void ImageIden::btPrePicPushed()
+void ImageIden::saveProgressPoll()
 {
-	cout << "Pre Photo" << endl;
+    ui->saveProgressBar->setValue(shmPtr->wtofile.haveSave);
 
-    ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
+    if(shmPtr->wtofile.haveSave == shmPtr->wtofile.count)
+    {
 
-    if (timer1->isActive())
-			timer1->stop();
-/*
-	m_getImg->load("./image/photo.jpg");
-    *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
-	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-*/
+        updateRecording();//更新图片名列表
+
+	    ui->leName->setEnabled(true);//
+	    ui->numberSBox->setEnabled(true);//
+        ui->delaySBox->setEnabled(true);
+        ui->btSave->setEnabled(true);//
+
+        ui->saveProgressBar->setVisible(false);//默认进度不可见
+        ui->saveProgressBar->hide();//默认进度不可见，两种设置均无效...
+        timer2->stop();
+
+	    disconnect(timer2, SIGNAL(timeout()), this, SLOT(saveProgressPoll()));
+    }
+	//延时保存图片定时器触发
 }
 
-void ImageIden::btNextPicPushed()
-{
-	cout << "Open dir" << endl;
-
-    loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "/opt/designed/image/",
-					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-	if (loadPicName.isEmpty())
-		return;
-	else
-	{
-		if ( !( m_getImg->load(loadPicName) ) )
-		{
-			QMessageBox::information(this,
-					tr("Open img error"),
-					tr("Open img error!"));
-			return;
-		}
-		
-        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
-        if (timer1->isActive())
-			timer1->stop();
-
-        *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
-		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-	}
-//    QString fileName;
-//
-//	fileName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "",
-//					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-//	if (fileName.isEmpty())
-//		return;
-//	else
-//	{
-//		if ( !( m_getImg->load(fileName) ) )
-//		{
-//			QMessageBox::information(this,
-//					tr("Open img error"),
-//					tr("Open img error!"));
-//			return;
-//		}
-//		
-//        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
-//        if (timer1->isActive())
-//			timer1->stop();
-//
-//        *m_getImg = m_getImg->scaled(QSize(250,330), Qt::IgnoreAspectRatio); //photo size
-//		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-//	}
-}
-
+///////////////////////////////Main Display////////////////////////////////
 void ImageIden::displayImage(const QString & fileName)
 {
     if (fileName.isEmpty())
@@ -604,24 +637,12 @@ void ImageIden::displayImage(const QString & fileName)
         if (timer1->isActive())
 			timer1->stop();
 
+        loadPicName = fileName;
+        ui->displayNameLb->setText("\346\234\254\345\234\260:"+fileName.section('/', -1));//只显示图片名字
+        
         *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 	}
-}
-
-void ImageIden::setRefrashImage(bool checked)
-{
-	if (checked)
-	{
-		cout << "checked" << endl;
-		if ( !(timer1->isActive()) )
-		{
-		        timer1->start(50);	
-		}
-	}
-	else
-		if (timer1->isActive())
-			timer1->stop();
 }
 
 void ImageIden::setGrayImage(bool checked)
@@ -629,6 +650,8 @@ void ImageIden::setGrayImage(bool checked)
 	if (checked)
 	{
 		cout << "Gray deal" << endl;
+        ui->displayNameLb->setText("\345\244\204\347\220\206\345\233\276\345\203\217");//“处理图像”
+
         sem_wait(&shmPtr->shmSem);
         shmPtr->deal.b_deal_running = true;//允许图像处理进程运行
         sem_post(&shmPtr->deal.sem_deal_wakeup);
@@ -642,6 +665,23 @@ void ImageIden::setGrayImage(bool checked)
         //sem_post(&shmPtr->deal.sem_deal_wakeup);
         sem_post(&shmPtr->shmSem);
     }
+}
+
+void ImageIden::setRefrashImage(bool checked)
+{
+	if (checked)
+	{
+		cout << "checked" << endl;
+        ui->displayNameLb->setText("\345\256\236\346\227\266\345\233\276\345\203\217");//“实时图像”
+
+		if ( !(timer1->isActive()) )
+		{
+		        timer1->start(50);	
+		}
+	}
+	else
+		if (timer1->isActive())
+			timer1->stop();
 }
 
 void ImageIden::doWhenTimeout1()
@@ -662,60 +702,21 @@ void ImageIden::doWhenTimeout1()
     }
     else
 	    loadPicName = "/opt/designed/image/src_image.jpg";
-	    //m_getImg->load("/opt/designed/image/src_image.jpg");
         
     m_getImg->load(loadPicName);
     *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
 	ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
 }
 
-void ImageIden::saveProgressPoll()
-{
-    ui->saveProgressBar->setValue(shmPtr->wtofile.haveSave);
-
-    if(shmPtr->wtofile.haveSave == shmPtr->wtofile.count)
-    {
-	    ui->leName->setEnabled(true);//
-	    ui->numberSBox->setEnabled(true);//
-        ui->delaySBox->setEnabled(true);
-        ui->btSave->setEnabled(true);//
-
-        ui->saveProgressBar->setVisible(false);//默认进度不可见
-        ui->saveProgressBar->hide();//默认进度不可见，两种设置均无效...
-        timer2->stop();
-
-	    disconnect(timer2, SIGNAL(timeout()), this, SLOT(saveProgressPoll()));
-    }
-	//延时保存图片定时器触发
-}
-
-//------------------------------------------------------------------//
-//人脸识别部分
+//////////////////////////////////////Face Detect////////////////////////////////
 void ImageIden::faceLoadPushed()
 {
-//	QString fileName;
+    QString filename;
 
-	loadPicName = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "/opt/designed/image/",
+	filename = QFileDialog::getOpenFileName(this, trUtf8("选择图像"), "/opt/designed/image/",
 					tr("Images(*.png *.bmp *.jpg *.tif *.GIF)"));
-	if (loadPicName.isEmpty())
-		return;
-	else
-	{
-		if ( !( m_getImg->load(loadPicName) ) )
-		{
-			QMessageBox::information(this,
-					tr("Open img error"),
-					tr("Open img error!"));
-			return;
-		}
-		
-        ui->rbRefrashImg->setChecked(false);//关闭更新按钮．
-        if (timer1->isActive())
-			timer1->stop();
 
-        *m_getImg = m_getImg->scaled(ui->labelPicture->size(), Qt::IgnoreAspectRatio); //photo size
-		ui->labelPicture->setPixmap(QPixmap::fromImage(*m_getImg));
-	}
+    displayImage(filename);
 }
 
 void ImageIden::faceDetectPushed()
@@ -743,3 +744,4 @@ void ImageIden::faceDetectPushed()
     ui->faceDetectBt->setEnabled(true);
 }
 
+/////////////////////////////////////////////END/////////////////////////////////////

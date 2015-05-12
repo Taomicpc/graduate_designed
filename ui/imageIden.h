@@ -12,6 +12,7 @@
 #include "TQInputMethod.h"
 #include <QWSInputMethod>
 #include <QFileDialog>
+#include <QStringList>
 
 extern "C"
 {
@@ -24,40 +25,39 @@ class ImageIden : public QMainWindow
 public :
 	explicit ImageIden(QWidget *parent = 0);
 	~ImageIden();
-	
+    void updateRecording();
+
 public slots :
 	void loadPicture();
 	void buttonQuit();
-	void buttonReboot();
-	
+	void btPrePicPushed();
+	void btNextPicPushed();
+////////////////Tower Ctrl////////////////////////////////
 	void btUpPushed();
 	void btDownPushed();
 	void btLeftPushed();
 	void btRightPushed();
     void startPushPoll();//长按的开始和结束槽函数
     void stopPushPoll();
-
-	void btSavePushed();
-	void btPhotoPushed();
-	void btPrePicPushed();
-	void btNextPicPushed();
-    void enableSaveButton(int value);
+	void longPushPoll();
 
     void horiSBoxInput();
     void vertSBoxInput();
-
-    //用
-    void horiAngleSet(int);
+    void horiAngleSet(int);//与舵机进程通信的操作修改
     void vertAngleSet(int);
+////////////////Photo Save////////////////////////////////
+    void enableSaveButton(int value);
+	void btSavePushed();
+	void btPhotoPushed();
+	void saveProgressPoll(); //connect to time2
 
+////////////////Main Display////////////////////////////////
 	void displayImage(const QString &);
 	void setRefrashImage(bool checked);  
 	void setGrayImage(bool checked);  
-
 	void doWhenTimeout1(); //定时刷新图片
-	void saveProgressPoll(); //progress poll
-	void longPushPoll(); //progress poll
 
+////////////////Face Detect////////////////////////////////
     void faceLoadPushed();
     void faceDetectPushed();
 
@@ -74,6 +74,9 @@ private:
 	QTimer *timer2;//定时器2动态挂载函数任务，主要用于定时轮询各种状态
 	int m_timeoutCount;
     QString loadPicName;//记录labelPicture加载的图片名字
+
+    QStringList recordingSave;
+    int showIndex;
 };
 
 #endif 
